@@ -1,0 +1,96 @@
+# Managed rollouts: Baseten's qualified configuration for this model and topology.
+# Edit only BUCKET (marked EDIT below). Name the model when you push:
+#   baseten model push --dir <this folder> --override-name <your model name> --wait
+# Create the two secrets named under secrets first (README.md, "Deploy"). Any other
+# change runs a configuration Baseten has not qualified.
+model_name: managed-rollouts
+description: BIS serving with trainer-published checkpoint updates.
+resources:
+  accelerator: B200:8
+  cpu: '100'
+  memory: 1700Gi
+bis_llm:
+  config:
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:d37df97ab2b230dabbb4c1c3434a8a9f1998492a0ff6caa5b26138385dabab6f
+    model_name: glm-5.3-flash-fp8
+    checkpoint_name: zai-org/GLM-5.3-Flash
+    tokenizer_limit_length: 262144
+    services:
+      frontend:
+        kind: frontend
+        replicas: 1
+      router:
+        kind: router
+        replicas: 1
+      worker:
+        kind: worker
+        env:
+        - name: ADMIN_HOST
+          value: 127.0.0.1
+      planner:
+        kind: planner
+        replicas: 1
+    served_model_name: glm-5.3-flash-fp8
+    arguments_as_json: true
+    ignore_return_log_probs_for_worker: false
+    reasoning_parser: glm47
+    reasoning_policy:
+      thinking: required
+      allowed:
+      - low
+      - high
+      - max
+      default: max
+    tool_call_parser: glm47
+    b10_vision_config:
+      enabled: true
+      encoding_mode: frontend_plan_worker_exec
+      supported_multi_modal_types:
+      - image_url
+    model_level_stop_words:
+    - <|user|>
+    - <|observation|>
+    - <|endoftext|>
+    engine_config:
+      page_size: 256
+      kv_event_block_size: 256
+      tp_size: 8
+      ep_size: 8
+      moe_runner_backend: triton
+      enable_return_routed_experts: true
+      dsa_prefill_backend: tilelang
+      dsa_decode_backend: tilelang
+      mm_attention_backend: sdpa
+      kv_cache_dtype: bfloat16
+      chunked_prefill_size: 8192
+      enable_hierarchical_cache: true
+      hicache_size: 96
+      hicache_write_policy: write_back
+      hicache_io_backend: kernel
+      hicache_mem_layout: page_first
+      mem_fraction_static: 0.85
+      max_mamba_cache_size: 1280
+      max_running_requests: 128
+      fp8_gemm_runner_backend: triton
+      context_length: 262144
+    rl:
+      model: glm-5.3-flash
+      nodes: 1
+      gpus_per_node: 8
+      environment:
+        RAM_WEIGHT_RESERVE_GB: '192'
+        INFERENCE_RL_TOPP_CAPTURE: '1'
+        SPARSE_STAGE_RAM_GB: '160'
+        WEIGHT_UPDATE_DECODE_BATCH_BYTES: '1073741824'
+        SPARSE_STAGE_DISK_RESERVE_GB: '5'
+        ARC_SKIP_ADLER: '0'
+        BUCKET: <YOUR_BUCKET_URL>  # EDIT: s3://bucket/prefix or gs://bucket/prefix
+        AWS_SECRET_NAME: rl_checkpoint_reader
+        USE_BDN_PROXY: '1'
+        BDN_PROXY_REQUIRED: '1'
+        BDN_PROXY_CREDENTIAL_FILE: /secrets/rl_bdn_partition
+      engine_environment:
+        SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION: '0'
+secrets:
+  rl_checkpoint_reader: null
+  rl_bdn_partition: null
