@@ -17,7 +17,7 @@ applies the new weights in place and keeps serving. You never redeploy to change
 We enable BIS and your folder's accelerator (B200, B300, GB300 or H100) on your Baseten workspace. Then, from this folder:
 
 1. Install the [Baseten CLI](https://github.com/basetenlabs/baseten-cli#installation) (v1.2.0+)
-   and run `baseten auth login --with-api-key` with your API key on stdin.
+   and run `baseten auth login --with-api-key --profile <name>` with your API key on stdin.
 2. Create these workspace secrets (Settings → Secrets) with exactly these names:
    - `rl_checkpoint_reader`: `{"aws_access_key_id": "...", "aws_secret_access_key": "...",
      "aws_region": "<bucket region>"}` (`aws_region` is required), static keys (a session token would expire) that can list and
@@ -29,7 +29,7 @@ We enable BIS and your folder's accelerator (B200, B300, GB300 or H100) on your 
 3. Pick a folder: `glm-5.3-flash/b200-8/` or `deepseek-v4.1-flash-mxfp4/b200-8/` (B200:8), `glm-5.2/b300-8/` (B300:8), `kimi-k3/gb300-8/`
    (two GB300:4 nodes) or `qwen3.5-9b/h100-1/` (H100). In its `config.yaml`, set `BUCKET` (the line marked `EDIT`) to `s3://bucket/prefix`
    or `gs://bucket/prefix`, ideally near the deployment region. Edit nothing else: it is the qualified configuration.
-4. Publish an anchor and name it in [`STARTUP_SNAPSHOT`](#hot-load-api), then `baseten model push --dir <folder> --override-name <your model name> --wait`.
+4. Publish an anchor and name it in [`STARTUP_SNAPSHOT`](#hot-load-api), then `baseten model push --dir <folder> --override-name <your model name> --profile <name> --wait`.
 5. Call `https://model-MODEL_ID.api.baseten.co/deployment/DEPLOYMENT_ID/sync/v1/chat/completions`
    (`Authorization: Api-Key <key>`, model = the config's `served_model_name`); see [RL fields](rl-api.md).
 
