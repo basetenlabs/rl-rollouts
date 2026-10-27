@@ -1,0 +1,142 @@
+# Managed rollouts: Baseten's qualified configuration for this model and topology.
+# Edit only BUCKET (marked EDIT below). Name the model when you push:
+#   baseten model push --dir <this folder> --override-name <your model name> --wait
+# Create the two secrets named under secrets first (README.md, "Deploy"). Any other
+# change runs a configuration Baseten has not qualified.
+model_name: managed-rollouts
+description: BIS serving with trainer-published checkpoint updates.
+resources:
+  accelerator: GB300:4
+  node_count: 2
+  instance_type: GB300:2x4
+  cpu: '120'
+  memory: 890Gi
+bis_llm:
+  version: 0.0.1-20261001221953-8f302211
+  config:
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:d37df97ab2b230dabbb4c1c3434a8a9f1998492a0ff6caa5b26138385dabab6f
+    model_name: kimi-k3
+    checkpoint_name: moonshotai/Kimi-K3
+    b10_routing_config:
+      algo_selector: B10
+      rate_limit_enabled: false
+      router_active_request_weight: 2000
+      router_queue_by_incoming_missing_isl:
+      - - 0
+        - 6000000
+      - - 1025
+        - 6000000
+      - - 8193
+        - 5000000
+      router_queue_threshold: 0
+      router_residency_eviction_cost: 20
+    services:
+      frontend:
+        kind: frontend
+        replicas: 3
+        hpa:
+          minReplicas: 3
+          maxReplicas: 3
+      router:
+        kind: router
+        replicas: 1
+      worker:
+        kind: worker
+        env:
+        - name: ADMIN_HOST
+          value: 127.0.0.1
+        - name: ADMIN_PORT
+          value: '8010'
+        - name: GLOO_SOCKET_IFNAME
+          value: eth0
+        - name: PYTORCH_CUDA_ALLOC_CONF
+          value: expandable_segments:True
+        - name: NCCL_LAUNCH_ORDER_IMPLICIT
+          value: '1'
+        - name: NCCL_MNNVL_ENABLE
+          value: '1'
+        - name: NCCL_CUMEM_ENABLE
+          value: '1'
+        - name: CUDA_CACHE_MAXSIZE
+          value: '1073741824'
+        - name: SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN
+          value: '1'
+      planner:
+        kind: planner
+        replicas: 1
+    served_model_name: kimi-k3
+    ignore_return_log_probs_for_worker: false
+    arguments_as_json: true
+    tokenizer_limit_length: 262144
+    reasoning_parser: kimi_k3
+    tool_call_parser: kimi_k3
+    model_level_stop_words:
+    - <|im_end|>
+    engine_config:
+      kv_event_block_size: 512
+      trust_remote_code: true
+      tp_size: 8
+      ep_size: 8
+      pp_size: 1
+      attn_dp_size: 1
+      dcp_size: 8
+      quantization: modelopt_fp4
+      moe_runner_backend: flashinfer_trtllm
+      decode_attention_backend: tokenspeed_mla
+      prefill_attention_backend: trtllm_mla
+      kv_cache_dtype: fp8_e4m3
+      page_size: 64
+      context_length: 262144
+      chunked_prefill_size: 16384
+      max_prefill_tokens: 16384
+      prefill_decode_interval: 1
+      mamba_ssm_dtype: float32
+      mamba_radix_cache_strategy: extra_buffer_lazy
+      mamba_max_states_per_path: 2
+      max_running_requests: 128
+      mem_fraction_static: 0.91
+      mamba_full_memory_ratio: 0.85
+      cuda_graph_backend_prefill: disabled
+      cuda_graph_max_bs_decode: 128
+      weight_loader_drop_cache_after_load: true
+      enable_cache_report: true
+      enable_return_routed_experts: true
+      speculative_algorithm: NEXTN
+      speculative_num_steps: 3
+      speculative_eagle_topk: 1
+      speculative_num_draft_tokens: 4
+    rl:
+      model: kimi-k3
+      nodes: 2
+      gpus_per_node: 4
+      environment:
+        INFERENCE_RL_OWNERSHIP: /opt/inference-rl/deployments/kimi-k3/ownership.json
+        ARC_SKIP_ADLER: '0'
+        INFERENCE_RL_TOPP_CAPTURE: '1'
+        RAM_WEIGHT_RESERVE_GB: '128'
+        SPARSE_STAGE_RAM_GB: '50'
+        SPARSE_STAGE_DISK_RESERVE_GB: '5'
+        DOWNLOAD_STREAMS_PER_NODE: '256'
+        DOWNLOAD_PART_MIB: '128'
+        WEIGHT_UPDATE_DECODE_BATCH_BYTES: '1073741824'
+        OPENBLAS_NUM_THREADS: '1'
+        BUCKET: <YOUR_BUCKET_URL>  # EDIT: s3://bucket/prefix or gs://bucket/prefix
+        AWS_SECRET_NAME: rl_checkpoint_reader
+        USE_BDN_PROXY: '1'
+        BDN_PROXY_REQUIRED: '1'
+        BDN_PROXY_CREDENTIAL_FILE: /secrets/rl_bdn_partition
+      engine_environment:
+        SGLANG_FLASHINFER_NVFP4_PER_TOKEN_ACTIVATION: '0'
+        SGLANG_ENABLE_TP_MEMORY_INBALANCE_CHECK: '0'
+        SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION: '0'
+        SGLANG_MOE_COPY_WEIGHT_VIEWS_BEFORE_H2D: '1'
+        SGLANG_K3_SP_COLLECTIVE: '1'
+        SGLANG_K3_SP_ATTN_RES: '1'
+        SGLANG_FLASHINFER_MOE_FUSED_FINALIZE: '1'
+        SGLANG_OPT_MAMBA_SKIP_DECODE_LOCK: '1'
+        SGLANG_GDN_CHUNK_H_BV: '16'
+        SGLANG_GDN_CHUNK_H_NUM_WARPS: '4'
+        SGLANG_GDN_CHUNK_H_NUM_STAGES: '3'
+secrets:
+  rl_checkpoint_reader: null
+  rl_bdn_partition: null
