@@ -11,7 +11,7 @@ resources:
   memory: 1700Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:d37df97ab2b230dabbb4c1c3434a8a9f1998492a0ff6caa5b26138385dabab6f
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:c7b04d21699563a9e17bc57cfce11f148f0c43bc36445d26cdb8f7967ecf249b
     model_name: glm-5.3-flash-fp8
     checkpoint_name: zai-org/GLM-5.3-Flash
     tokenizer_limit_length: 262144
