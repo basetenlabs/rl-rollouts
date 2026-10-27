@@ -1,0 +1,100 @@
+# Managed rollouts: Baseten's qualified configuration for this model and topology.
+# Edit only BUCKET (marked EDIT below). Name the model when you push:
+#   baseten model push --dir <this folder> --override-name <your model name> --wait
+# Create the two secrets named under secrets first (README.md, "Deploy"). Any other
+# change runs a configuration Baseten has not qualified.
+model_name: managed-rollouts
+description: BIS serving with trainer-published checkpoint updates.
+resources:
+  accelerator: B300:8
+  cpu: '150'
+  memory: 1760Gi
+bis_llm:
+  config:
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:d37df97ab2b230dabbb4c1c3434a8a9f1998492a0ff6caa5b26138385dabab6f
+    model_name: glm-5.2-fp8
+    checkpoint_name: zai-org/GLM-5.2
+    tokenizer_limit_length: 131072
+    services:
+      frontend:
+        kind: frontend
+        replicas: 1
+      router:
+        kind: router
+        replicas: 1
+      worker:
+        kind: worker
+        env:
+        - name: ADMIN_HOST
+          value: 127.0.0.1
+      planner:
+        kind: planner
+        replicas: 1
+    served_model_name: glm-5.2-fp8
+    arguments_as_json: true
+    ignore_return_log_probs_for_worker: false
+    reasoning_parser: glm47
+    tool_call_parser: glm47
+    model_level_stop_words:
+    - <|user|>
+    - <|observation|>
+    - <|endoftext|>
+    engine_config:
+      page_size: 64
+      kv_event_block_size: 64
+      tp_size: 8
+      attn_dp_size: 8
+      ep_size: 8
+      mem_fraction_static: 0.85
+      enable_return_routed_experts: true
+      enable_fp32_lm_head: true
+      moe_runner_backend: flashinfer_trtllm_routed
+      moe_a2a_backend: flashinfer
+      flashinfer_a2a_dispatch_type: bf16
+      fp8_gemm_runner_backend: triton
+      kv_cache_dtype: bfloat16
+      enable_hierarchical_cache: true
+      hicache_size: 32
+      hicache_write_policy: write_through
+      hicache_io_backend: kernel
+      hicache_mem_layout: page_first
+      disable_shared_experts_fusion: true
+      cuda_graph_backend_decode: full
+      cuda_graph_backend_prefill: disabled
+      cuda_graph_max_bs_decode: 96
+      context_length: 131072
+      max_total_tokens: 147456
+      max_running_requests: 128
+      chunked_prefill_size: 65536
+      prefill_decode_interval: 2
+      dsa_topk_backend: flashinfer
+      speculative_dsa_topk_backend: flashinfer
+      speculative_algorithm: NEXTN
+      speculative_num_steps: 3
+      speculative_eagle_topk: 1
+      speculative_num_draft_tokens: 4
+    rl:
+      model: glm-5.2
+      nodes: 1
+      gpus_per_node: 8
+      environment:
+        INFERENCE_RL_TOPP_CAPTURE: '1'
+        INFERENCE_RL_MTP_SYNC: '1'
+        RAM_WEIGHT_RESERVE_GB: '384'
+        SPARSE_STAGE_RAM_GB: '256'
+        SPARSE_STAGE_DISK_RESERVE_GB: '5'
+        ARC_SKIP_ADLER: '0'
+        BUCKET: <YOUR_BUCKET_URL>  # EDIT: s3://bucket/prefix or gs://bucket/prefix
+        AWS_SECRET_NAME: rl_checkpoint_reader
+        USE_BDN_PROXY: '1'
+        BDN_PROXY_REQUIRED: '1'
+        BDN_PROXY_CREDENTIAL_FILE: /secrets/rl_bdn_partition
+      engine_environment:
+        SGLANG_DISABLE_DSA_INDEXER_FUSION: '1'
+        SGLANG_USE_DEEPGEMM_BMM: '0'
+        SGLANG_DSA_TOPK_FLASHINFER_DETERMINISTIC: '1'
+        SGLANG_DSA_TOPK_FLASHINFER_TIE_BREAK: small
+        SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION: '0'
+secrets:
+  rl_checkpoint_reader: null
+  rl_bdn_partition: null

@@ -1,6 +1,7 @@
 {
   "published": {
     "deepseek-v4.1-flash-mxfp4/b200-8": "a8336418e8c70bd9ca647ca8a74cf59b1b3d2911",
+    "glm-5.2/b300-8": "cd1ae644a779cb50615703c94aa8d09bcb04766a",
     "glm-5.3-flash/b200-8": "a8336418e8c70bd9ca647ca8a74cf59b1b3d2911",
     "qwen3.5-9b/h100-1": "a8336418e8c70bd9ca647ca8a74cf59b1b3d2911"
   },
