@@ -1,9 +1,9 @@
-# Managed rollouts: Baseten's qualified configuration for this model and topology.
+# RL Rollouts: Baseten's qualified configuration for this model and topology.
 # Edit only BUCKET (marked EDIT below). Name the model when you push:
 #   baseten model push --dir <this folder> --override-name <your model name> --wait
 # Create the two secrets named under secrets first (README.md, "Deploy"). Any other
 # change runs a configuration Baseten has not qualified.
-model_name: managed-rollouts
+model_name: rl-rollouts
 description: BIS serving with trainer-published checkpoint updates.
 resources:
   accelerator: H100:1
