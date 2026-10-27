@@ -1,4 +1,4 @@
-# Managed rollouts: client guide
+# RL Rollouts: client guide
 
 Your rollout deployment serves a model whose weights follow your trainer. You publish checkpoints
 to an Amazon S3 or Google Cloud Storage (GCS) bucket you own and request each one; every replica
