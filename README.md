@@ -26,9 +26,9 @@ We enable BIS and your folder's accelerator (B200, B300, GB300 or H100) on your 
      on the bucket, and `"aws_region": "us-east-1"`.
    - `rl_bdn_partition`: any random string you generate, e.g. `openssl rand -hex 32`.
    - `hf_access_token`, only if the push asks for it: a Hugging Face read token.
-3. Pick a folder: `glm-5.3-flash/b200-8/` or `deepseek-v4.1-flash-mxfp4/b200-8/` (B200:8), `glm-5.2/b300-8/` (B300:8), `kimi-k3/gb300-8/`
+3. Pick a folder: `glm-5.3-flash/b200-8/` or `deepseek-v4.1-flash-mxfp4/b200-8/` (B200:8), `glm-5.2/b300-8/` (B300:8), `kimi-k3/gb300-8/` (MXFP4; in development, not yet acceptance-qualified) or `kimi-k3-nvfp4/gb300-8/`
    (two GB300:4 nodes) or `qwen3.5-9b/h100-1/` (H100). In its `config.yaml`, set `BUCKET` (the line marked `EDIT`) to `s3://bucket/prefix`
-   or `gs://bucket/prefix`, ideally near the deployment region. Edit nothing else: it is the qualified configuration.
+   or `gs://bucket/prefix`, ideally near the deployment region. Edit nothing else: config changes depart from the documented recipe.
 4. Publish an anchor and name it in [`STARTUP_SNAPSHOT`](#hot-load-api), then `baseten model push --dir <folder> --override-name <your model name> --profile <name> --wait`.
 5. Call `https://model-MODEL_ID.api.baseten.co/deployment/DEPLOYMENT_ID/sync/v1/chat/completions`
    (`Authorization: Api-Key <key>`, model = the config's `served_model_name`); see [RL fields](rl-api.md).
@@ -136,8 +136,8 @@ Its `verify --parent HF_DIR --delta DIR` applies a delta locally and checks ever
 - **Never modify a published snapshot.** Write a new identity instead. Identities must be unique.
 - **Diff against exactly what you published:** the parent's on-disk bytes after quantization, not your trainer's master weights.
 - **Keep the checkpoint format fixed.** Anchors must be complete and use the deployed layout: 128×128
-  block-FP8 for GLM; FP8 32×32/MXFP4 with BF16 `wo_a` and FP32 dense block scales for DeepSeek V4.1
-  Flash; the published BF16 checkpoint (FP32 `A_log` and gated norms) for Qwen 3.5. Changing `config.json`, tokenizer or chat template needs a redeploy.
+  block-FP8 for GLM; published MXFP4 for Kimi K3 default; block-16 NVFP4 with one NextN layer for `kimi-k3-nvfp4`; FP8 32×32/MXFP4
+  with BF16 `wo_a` and FP32 dense block scales for DeepSeek V4.1 Flash; published BF16 (FP32 `A_log`, gated norms) for Qwen 3.5. Changing `config.json`, tokenizer or chat template needs a redeploy.
 - **The vision encoder is frozen.** A delta that changes vision-encoder tensors is rejected before
   the pause; the old policy keeps serving. A new anchor reloads its own encoder (GLM 5.3 Flash: FP32).
 - **Publish a new anchor occasionally,** for example when a chain gets long or a large share of
