@@ -14,7 +14,7 @@ resources:
 bis_llm:
   version: 0.0.1-20261001221953-8f302211
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:63908a8e0d964f184abec11aeee8bd2f9881ec956569080fffae181509e85005
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:3c01e46a94baff952880f2ab135e594dc07432466cc1f3739c2560a3a3637c19
     model_name: kimi-k3
     checkpoint_name: moonshotai/Kimi-K3
     b10_routing_config:
@@ -59,8 +59,6 @@ bis_llm:
           value: '1'
         - name: CUDA_CACHE_MAXSIZE
           value: '1073741824'
-        - name: SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN
-          value: '1'
       planner:
         kind: planner
         replicas: 1
@@ -73,38 +71,33 @@ bis_llm:
     model_level_stop_words:
     - <|im_end|>
     engine_config:
-      kv_event_block_size: 512
+      kv_event_block_size: 64
       trust_remote_code: true
       tp_size: 8
       ep_size: 8
       pp_size: 1
       attn_dp_size: 1
-      dcp_size: 8
-      quantization: modelopt_fp4
-      moe_runner_backend: flashinfer_trtllm
-      decode_attention_backend: tokenspeed_mla
-      prefill_attention_backend: trtllm_mla
+      dcp_size: 1
+      moe_runner_backend: flashinfer_mxfp4
       kv_cache_dtype: fp8_e4m3
       page_size: 64
       context_length: 262144
       chunked_prefill_size: 16384
       max_prefill_tokens: 16384
-      prefill_decode_interval: 1
       mamba_ssm_dtype: float32
       mamba_radix_cache_strategy: extra_buffer_lazy
-      mamba_max_states_per_path: 2
-      max_running_requests: 128
-      mem_fraction_static: 0.91
       mamba_full_memory_ratio: 0.85
-      cuda_graph_backend_prefill: disabled
-      cuda_graph_max_bs_decode: 128
+      max_mamba_cache_size: 512
+      max_running_requests: 512
+      mem_fraction_static: 0.91
+      cuda_graph_backend_prefill: breakable
+      cuda_graph_max_bs_decode: 256
+      num_continuous_decode_steps: 1
+      schedule_conservativeness: 1
+      enable_hierarchical_cache: false
       weight_loader_drop_cache_after_load: true
       enable_cache_report: true
       enable_return_routed_experts: true
-      speculative_algorithm: NEXTN
-      speculative_num_steps: 3
-      speculative_eagle_topk: 1
-      speculative_num_draft_tokens: 4
     rl:
       model: kimi-k3
       nodes: 2
@@ -126,17 +119,9 @@ bis_llm:
         BDN_PROXY_REQUIRED: '1'
         BDN_PROXY_CREDENTIAL_FILE: /secrets/rl_bdn_partition
       engine_environment:
-        SGLANG_FLASHINFER_NVFP4_PER_TOKEN_ACTIVATION: '0'
         SGLANG_ENABLE_TP_MEMORY_INBALANCE_CHECK: '0'
         SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION: '0'
         SGLANG_MOE_COPY_WEIGHT_VIEWS_BEFORE_H2D: '1'
-        SGLANG_K3_SP_COLLECTIVE: '1'
-        SGLANG_K3_SP_ATTN_RES: '1'
-        SGLANG_FLASHINFER_MOE_FUSED_FINALIZE: '1'
-        SGLANG_OPT_MAMBA_SKIP_DECODE_LOCK: '1'
-        SGLANG_GDN_CHUNK_H_BV: '16'
-        SGLANG_GDN_CHUNK_H_NUM_WARPS: '4'
-        SGLANG_GDN_CHUNK_H_NUM_STAGES: '3'
 secrets:
   rl_checkpoint_reader: null
   rl_bdn_partition: null
