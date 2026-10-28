@@ -11,7 +11,7 @@ resources:
   memory: 1700Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:3c01e46a94baff952880f2ab135e594dc07432466cc1f3739c2560a3a3637c19
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:952494b161e2499ec5982b7143b484e14d53ea779600dac8189eeea62167785c
     model_name: deepseek-v4.1-flash-mxfp4
     checkpoint_name: deepseek-ai/DeepSeek-V4.1-Flash-1017
     tokenizer_limit_length: 262144
