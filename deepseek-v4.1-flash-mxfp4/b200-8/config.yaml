@@ -11,7 +11,7 @@ resources:
   memory: 1700Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:952494b161e2499ec5982b7143b484e14d53ea779600dac8189eeea62167785c
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:a6169dd6a9ca2f22699088cbeac3b6d5e5b8e64f2a21a7b2bd78982c6e051d3d
     model_name: deepseek-v4.1-flash-mxfp4
     checkpoint_name: deepseek-ai/DeepSeek-V4.1-Flash-1017
     tokenizer_limit_length: 262144
@@ -70,7 +70,7 @@ bis_llm:
       environment:
         RAM_WEIGHT_RESERVE_GB: '192'
         INFERENCE_RL_TOPP_CAPTURE: '1'
-        SPARSE_STAGE_RAM_GB: '160'
+        DELTA_RAM_GB: '170'
         WEIGHT_UPDATE_DECODE_BATCH_BYTES: '1073741824'
         SPARSE_STAGE_DISK_RESERVE_GB: '5'
         ARC_SKIP_ADLER: '0'
