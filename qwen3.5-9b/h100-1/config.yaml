@@ -11,7 +11,7 @@ resources:
   memory: 220Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:952494b161e2499ec5982b7143b484e14d53ea779600dac8189eeea62167785c
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:a6169dd6a9ca2f22699088cbeac3b6d5e5b8e64f2a21a7b2bd78982c6e051d3d
     model_name: qwen3.5-9b
     checkpoint_name: Qwen/Qwen3.5-9B
     tokenizer_limit_length: 262144
@@ -54,7 +54,7 @@ bis_llm:
       environment:
         RAM_WEIGHT_RESERVE_GB: '128'
         INFERENCE_RL_TOPP_CAPTURE: '1'
-        SPARSE_STAGE_RAM_GB: '32'
+        DELTA_RAM_GB: '54'
         WEIGHT_UPDATE_DECODE_BATCH_BYTES: '268435456'
         SPARSE_STAGE_DISK_RESERVE_GB: '5'
         ARC_SKIP_ADLER: '0'
