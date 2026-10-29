@@ -11,7 +11,7 @@ resources:
   memory: 1760Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:952494b161e2499ec5982b7143b484e14d53ea779600dac8189eeea62167785c
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:a6169dd6a9ca2f22699088cbeac3b6d5e5b8e64f2a21a7b2bd78982c6e051d3d
     model_name: glm-5.2-fp8
     checkpoint_name: zai-org/GLM-5.2
     tokenizer_limit_length: 131072
@@ -81,7 +81,8 @@ bis_llm:
         INFERENCE_RL_TOPP_CAPTURE: '1'
         INFERENCE_RL_MTP_SYNC: '1'
         RAM_WEIGHT_RESERVE_GB: '384'
-        SPARSE_STAGE_RAM_GB: '256'
+        DELTA_RAM_GB: '460'
+        WEIGHT_UPDATE_DECODE_BATCH_BYTES: '1073741824'
         SPARSE_STAGE_DISK_RESERVE_GB: '5'
         ARC_SKIP_ADLER: '0'
         BUCKET: <YOUR_BUCKET_URL>  # EDIT: s3://bucket/prefix or gs://bucket/prefix
