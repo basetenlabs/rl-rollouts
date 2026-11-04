@@ -1,7 +1,7 @@
 # RL Rollouts: Baseten's qualified configuration for this model and topology.
 # Edit only BUCKET (marked EDIT below). Name the model when you push:
 #   baseten model push --dir <this folder> --override-name <your model name> --wait
-# Create the two secrets named under secrets first (README.md, "Deploy"). Any other
+# Create the two secrets named under secrets first (docs/deploy.md). Any other
 # change runs a configuration Baseten has not qualified.
 model_name: rl-rollouts
 description: BIS serving with trainer-published checkpoint updates.
@@ -14,7 +14,7 @@ resources:
 bis_llm:
   version: 0.0.1-20261001221953-8f302211
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:a6169dd6a9ca2f22699088cbeac3b6d5e5b8e64f2a21a7b2bd78982c6e051d3d
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:6f5381d2c17ec6deacbe64d1c50960cefe26f60c7c34d10b1fc05f2e5db8960b
     model_name: kimi-k3
     checkpoint_name: moonshotai/Kimi-K3
     b10_routing_config:
@@ -95,7 +95,7 @@ bis_llm:
       num_continuous_decode_steps: 1
       schedule_conservativeness: 1
       enable_hierarchical_cache: true
-      hicache_size: 34
+      hicache_size: 17
       weight_loader_drop_cache_after_load: true
       enable_cache_report: true
       enable_return_routed_experts: true
