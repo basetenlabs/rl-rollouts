@@ -10,7 +10,8 @@ It is a self-check: a deployment never asks for its result. A passing report, wi
 your deployment runs is what Baseten [supports](add-your-own-model.md#support), and the report is what you send
 us to ask for support. The report names the image `revision`, `package_sha256`, `spec_digest` and GPUs it ran
 on. Run it again after any change to the package (its `sglang.patch` included), the image (`gpuTRTImage`), the
-config's engine settings or environment, the topology or your `config.json`. Single-node recipes only.
+config's engine settings or environment, the topology or your `config.json`. These steps are for single-node
+recipes; CI runs a multi-node recipe's kit as a multi-node training job, so ask us for a run on yours.
 
 A `PASS` proves weight sync for that setup only: every GPU tensor a delta or full swap must change reaches
 the natively loaded value, and requests and caches survive both. It says nothing about your model's own
