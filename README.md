@@ -36,3 +36,6 @@ Each recipe is a `config.yaml` under `models/<model>/<topology>/`:
 A model we do not ship can use the same in-place updates when you supply its weight spec, and its
 SGLang model class if SGLang lacks one. Start at [Add your own model](docs/add-your-own-model.md);
 [`examples/`](examples/) holds two worked packages.
+
+Custom models and SGLang patches are available only for organizations where they are enabled.
+Contact the Baseten team (support@baseten.co) for details.

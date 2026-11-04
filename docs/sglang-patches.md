@@ -1,5 +1,7 @@
 # Patching SGLang
 
+> Custom models and SGLang patches need enablement for your organization; see [availability](../README.md#bring-your-own-model).
+
 When your model needs SGLang changes (a model file, an attention backend, a Triton kernel, request fields,
 scheduler code), put them in your package as `sglang.patch`: a plain `git diff` against the SGLang fork
 that the image pins. Ask us for the export of that pin. It contains the fork tree minus the protected

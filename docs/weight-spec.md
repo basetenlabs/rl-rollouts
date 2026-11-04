@@ -4,7 +4,8 @@ Your package's `weight_update.py` says how your checkpoint's tensors land in the
 It exports `SPECS`, a tuple of specs written with the `weight_spec` library that ships in the serving
 image. [`examples/deepseek-v3.2/deepseek_v32_rl/weight_update.py`](../examples/deepseek-v3.2/deepseek_v32_rl/weight_update.py)
 is a complete MoE example with a synced draft; [`examples/joey-1/joey1_rl/weight_update.py`](../examples/joey-1/joey1_rl/weight_update.py)
-is a dense one with a frozen vision tower.
+is a dense one with a frozen vision tower. Custom models need enablement for your organization:
+see [availability](../README.md#bring-your-own-model).
 
 ## Vocabulary
 

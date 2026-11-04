@@ -1,6 +1,7 @@
 # Deploy a recipe
 
-We enable BIS and your recipe's accelerator (B200, B300, GB300 or H100) on your Baseten workspace. Then:
+We enable BIS and your recipe's accelerator (B200, B300, GB300 or H100) on your Baseten workspace.
+Custom models and SGLang patches must also be [enabled for your organization](../README.md#bring-your-own-model). Then:
 
 1. Install the [Baseten CLI](https://github.com/basetenlabs/baseten-cli#installation) (v1.2.0+) and run `baseten auth login --with-api-key --profile <name>` with your API key on stdin.
 2. Create these workspace secrets (Settings → Secrets) with exactly these names:

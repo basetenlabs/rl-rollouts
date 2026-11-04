@@ -3,6 +3,8 @@
 A model we do not ship can use the same in-place weight updates as the [recipes we ship](../README.md#use-a-model-we-ship).
 You bring one Python package; Baseten's serving image does the rest.
 
+> Custom models and SGLang patches need enablement for your organization; see [availability](../README.md#bring-your-own-model).
+
 ## Which case are you?
 
 | Your model | Your package holds | Example |
