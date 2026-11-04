@@ -1,0 +1,85 @@
+# RL Rollouts: Baseten's qualified configuration for this model and topology.
+# Edit only BUCKET (marked EDIT below). Name the model when you push:
+#   baseten model push --dir <this folder> --override-name <your model name> --wait
+# Create the two secrets named under secrets first (docs/deploy.md). Any other
+# change runs a configuration Baseten has not qualified.
+# Or read Snapshots from Cannery volumes: set rl.cannery to true (also marked EDIT), and each hot-load
+# names its volume (docs/checkpoints.md).
+model_name: rl-rollouts
+description: BIS serving with trainer-published checkpoint updates.
+resources:
+  accelerator: H200:1
+  cpu: '14'
+  memory: 190Gi
+bis_llm:
+  config:
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:fecf4190e2dffb4ea76d6e9c34eef1229a3d4c37b7a35a2ea2fa41371ce75719
+    model_name: qwen3.8-27b
+    checkpoint_name: Qwen/Qwen3.8-27B
+    tokenizer_limit_length: 262144
+    b10_routing_config:
+      rate_limit_enabled: false
+      router_queue_by_incoming_missing_isl:
+      - - 0
+        - 6000000
+      - - 1025
+        - 6000000
+      - - 8193
+        - 5000000
+      router_queue_threshold: 0
+    services:
+      frontend:
+        kind: frontend
+        replicas: 1
+      router:
+        kind: router
+        replicas: 1
+      worker:
+        kind: worker
+        env:
+        - name: ADMIN_HOST
+          value: 127.0.0.1
+      planner:
+        kind: planner
+        replicas: 1
+    served_model_name: qwen3.8-27b
+    arguments_as_json: true
+    ignore_return_log_probs_for_worker: false
+    reasoning_parser: qwen3
+    tool_call_parser: qwen3_coder
+    default_thinking_enabled: true
+    b10_vision_config:
+      enabled: true
+      encoding_mode: frontend_plan_worker_exec
+      supported_multi_modal_types:
+      - image_url
+      family: qwen35
+    engine_config:
+      tp_size: 1
+      page_size: 64
+      kv_event_block_size: 64
+      sleep_on_idle: true
+      mem_fraction_static: 0.85
+      context_length: 262144
+    rl:
+      model: qwen3.8-27b
+      nodes: 1
+      gpus_per_node: 1
+      cannery: false  # EDIT: true reads Snapshots from the Cannery volume each hot-load names; BUCKET and the secrets are then unused
+      environment:
+        RAM_WEIGHT_RESERVE_GB: '128'
+        INFERENCE_RL_TOPP_CAPTURE: '1'
+        DELTA_RAM_GB: '54'
+        WEIGHT_UPDATE_DECODE_BATCH_BYTES: '268435456'
+        SPARSE_STAGE_DISK_RESERVE_GB: '5'
+        ARC_SKIP_ADLER: '0'
+        BUCKET: <YOUR_BUCKET_URL>  # EDIT: s3://bucket/prefix or gs://bucket/prefix
+        AWS_SECRET_NAME: rl_checkpoint_reader
+        USE_BDN_PROXY: '1'
+        BDN_PROXY_REQUIRED: '1'
+        BDN_PROXY_CREDENTIAL_FILE: /secrets/rl_bdn_partition
+      engine_environment:
+        SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION: '0'
+secrets:
+  rl_checkpoint_reader: null
+  rl_bdn_partition: null
