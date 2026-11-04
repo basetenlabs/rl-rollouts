@@ -1,7 +1,7 @@
 # RL request and response fields
 
 RL fields ride on `POST .../sync/v1/chat/completions` and `POST .../sync/v1/completions` (same base URL
-and `Authorization: Api-Key <key>` as in the [guide](README.md#deploy)). Ask for outputs in
+and `Authorization: Api-Key <key>` as in [Deploy a recipe](deploy.md)). Ask for outputs in
 `nvext.extra_fields`; set inputs in `baseten.rl`:
 
 ```json
@@ -19,6 +19,8 @@ and `Authorization: Api-Key <key>` as in the [guide](README.md#deploy)). Ask for
 | `baseten.rl.logprob_start_len` | First prompt position scored by `prompt_logprobs` (default 0). |
 | `baseten.rl.kv_cache_tag` | 1–256 character rollout ID; see [multi-turn rollouts](#multi-turn-rollouts). |
 | `baseten.rl.images` | Image URLs for a token-ID prompt on `/v1/completions`; see [images](#images). |
+| `baseten.rl.model_inputs` | JSON object passed to an external model package's SGLang class. |
+| `baseten.rl.token_ids_logprob` | Token IDs whose output logprobs you need even outside the top returned logprobs. |
 | `baseten.rl.return_sampling_mask` | `true` returns the [retained top-p support](#sampling-support). |
 
 RL fields need `n` = 1 (one choice); unknown `baseten.rl` keys return HTTP 400. Use non-streaming
@@ -29,12 +31,12 @@ requests: streams carry token IDs as per-chunk deltas and reject sampling masks.
 | `nvext.prompt_token_ids` | The prompt IDs the engine received (image placeholders unexpanded). |
 | `nvext.completion_token_ids` | Every sampled token, including stop, tool-call and reasoning tokens hidden from the text. |
 | `nvext.prompt_logprobs` | One entry per prompt token: `null` for the first, else a map from token ID to `logprob` and `rank`. |
+| `nvext.token_ids_logprobs` | Output-token logprobs for `baseten.rl.token_ids_logprob`. |
 | `nvext.engine_data` | `policy_version`, `weight_identity`, `replica_id`, usage counts; `topp_token_ids`/`topp_lens` when requested. |
 | `nvext.routed_experts` | Base64 `.npy` array `[rows, layers, top_k]` of logical expert IDs, `uint8` (≤ 256 experts) or `uint16`. |
 | `nvext.routed_experts_start` | Absolute position of the first `routed_experts` row. |
 
-`usage` and the selected log probabilities in `choices` also cover tokens hidden from the text.
-Policy labels are read when the response finishes; a request kept across an update may mix policies.
+`usage` and the selected log probabilities in `choices` also cover tokens hidden from the text. Policy labels are read when the response finishes; a request kept across an update may mix policies.
 
 ## Expert routes
 

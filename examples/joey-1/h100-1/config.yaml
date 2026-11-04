@@ -1,0 +1,76 @@
+# RL Rollouts: Baseten's qualified configuration for this model and topology.
+# Edit only BUCKET (marked EDIT below). Name the model when you push:
+#   baseten model push --dir <this folder> --override-name <your model name> --wait
+# Create the two secrets named under secrets first (docs/deploy.md). Any other
+# change runs a configuration Baseten has not qualified.
+# This recipe serves a weight-spec package (rl.model: external). To serve your own architecture,
+# also change exactly rl.external_package and rl.external_package_source (your package archive
+# in your bucket).
+model_name: rl-rollouts
+description: BIS serving with trainer-published checkpoint updates.
+resources:
+  accelerator: H100:1
+  cpu: '22'
+  memory: 220Gi
+bis_llm:
+  config:
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:be5ec455fb531a1f1242f4378efe5955f870111a23c5405ba03619cf6f570c48
+    model_name: joey-1
+    checkpoint_name: baselabs/joey-1
+    tokenizer_limit_length: 32768
+    services:
+      frontend:
+        kind: frontend
+        replicas: 1
+      router:
+        kind: router
+        replicas: 1
+      worker:
+        kind: worker
+        env:
+        - name: ADMIN_HOST
+          value: 127.0.0.1
+      planner:
+        kind: planner
+        replicas: 1
+    served_model_name: joey-1
+    arguments_as_json: true
+    ignore_return_log_probs_for_worker: false
+    engine_config:
+      tp_size: 1
+      dtype: bfloat16
+      enable_fp32_lm_head: true
+      enable_multimodal: false
+      attention_backend: triton
+      page_size: 1
+      kv_event_block_size: 1
+      chunked_prefill_size: -1
+      mamba_radix_cache_strategy: no_buffer
+      disable_overlap_schedule: true
+      cuda_graph_backend_prefill: disabled
+      mem_fraction_static: 0.6
+      context_length: 32768
+      max_prefill_tokens: 32768
+    rl:
+      model: external
+      external_package: joey1_rl
+      external_package_source: s3://your-bucket/joey1_rl.tar.gz  # EDIT: s3:// or gs:// URL of your package archive
+      nodes: 1
+      gpus_per_node: 1
+      environment:
+        RAM_WEIGHT_RESERVE_GB: '128'
+        INFERENCE_RL_TOPP_CAPTURE: '1'
+        DELTA_RAM_GB: '54'
+        WEIGHT_UPDATE_DECODE_BATCH_BYTES: '268435456'
+        SPARSE_STAGE_DISK_RESERVE_GB: '5'
+        ARC_SKIP_ADLER: '0'
+        BUCKET: <YOUR_BUCKET_URL>  # EDIT: s3://bucket/prefix or gs://bucket/prefix
+        AWS_SECRET_NAME: rl_checkpoint_reader
+        USE_BDN_PROXY: '1'
+        BDN_PROXY_REQUIRED: '1'
+        BDN_PROXY_CREDENTIAL_FILE: /secrets/rl_bdn_partition
+      engine_environment:
+        SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION: '0'
+secrets:
+  rl_checkpoint_reader: null
+  rl_bdn_partition: null
