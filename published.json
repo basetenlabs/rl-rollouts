@@ -1,7 +1,7 @@
 {
   "published": {
     "models/deepseek-v4.1-flash-mxfp4/b200-8": "6d4b2c10651e43ea0d8298310cbf8bb126f77ca0",
-    "models/glm-5.2/b300-8": "e5a3a445492a8973f77a22886c59b6d8e365b51f",
+    "models/glm-5.2/b300-8": "46f54bc93fcca6a58cedddb239751f9eb11e04b7",
     "models/glm-5.3-flash/b200-8": "39cc7019753deeb3b96262cbc29bc1d0880fbb58",
     "models/kimi-k3/gb300-8": "46f54bc93fcca6a58cedddb239751f9eb11e04b7",
     "models/qwen3.5-9b/h100-1": "a2330eca30e99457178a66009e4d3b02e8a2b78c"
