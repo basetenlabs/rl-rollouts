@@ -11,7 +11,7 @@ resources:
   memory: 220Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:be5ec455fb531a1f1242f4378efe5955f870111a23c5405ba03619cf6f570c48
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:6f5381d2c17ec6deacbe64d1c50960cefe26f60c7c34d10b1fc05f2e5db8960b
     model_name: qwen3.5-9b
     checkpoint_name: Qwen/Qwen3.5-9B
     tokenizer_limit_length: 262144
