@@ -29,7 +29,7 @@ json.dump(config, open("config.json", "w"), indent=2)
 |---|---|
 | This repository: the guide, recipes and both examples | The weight-sync runtime source (the image ships it as bytecode) |
 | The serving image, with the `weight_spec` library and the [conformance kit](conformance-kit.md) | The protected SGLang files and definitions ([patch rules](sglang-patches.md#rules)) |
-| The SGLang export of the image's pin: ask us for it | Changes to the image: the kit checks every file against its manifest |
+| The image's SGLang export, as a [release](https://github.com/basetenlabs/rl-rollouts/releases) named on the README's [current-image line](../README.md#bring-your-own-model) | Changes to the image: the kit checks every file against its manifest |
 | Baseten workstations and BIS on your workspace | Compiled kernels (Triton kernels in Python files are fine) |
 | | Multi-node recipes for your own model |
 | | Our architecture names |
@@ -42,7 +42,9 @@ export ──► class + patch ──► spec ──► CPU spec check ──►
                 └───────── fix ─────────────┴───────────────┘           for support: kit run ──► kit-out to us
 ```
 
-1. **Get the export** of the image's SGLang pin from us (only if you bring a class or a patch).
+1. **Get the export** of the image's SGLang pin (only if you bring a class or a patch): the README's
+   [current-image line](../README.md#bring-your-own-model) names the image (`gpuTRTImage`, which the examples already set) and its SGLang
+   release; download that [release](https://github.com/basetenlabs/rl-rollouts/releases) ([details](sglang-patches.md)).
 2. **Write the class and the patch**: the class in your package's `models/`, engine changes as
    [`sglang.patch`](sglang-patches.md). Skip this step for a stock SGLang class.
 3. **Write the spec** in `weight_update.py` ([vocabulary](weight-spec.md#vocabulary)), and cast your
@@ -67,11 +69,7 @@ export ──► class + patch ──► spec ──► CPU spec check ──►
    whose image you have not changed (a fresh one is simplest), on the image your deployment runs, and send us
    the whole `kit-out` folder (`report.json` and the logs).
 
-## Support
-
-The kit is your self-check: a deployment of your package never asks for its result. Baseten supports a
-setup whose kit report, without `--dev`, says `PASS` on the image the deployment runs (`gpuTRTImage`), with
-the same package, engine settings, topology and `config.json`; send us that `kit-out` to ask for support.
+The kit is your self-check: a deployment of your package never asks for its result.
 
 ## What Baseten guarantees, and what you prove
 
@@ -100,7 +98,7 @@ are good enough to train on. Nothing in a deployment re-runs the kit or checks y
 
 A report covers one setup. Run the kit again after any change to:
 
-- the image (`gpuTRTImage`): rebase your `sglang.patch` onto the new pin first;
+- the image (`gpuTRTImage`): rebase your `sglang.patch` onto the new image's SGLang release first;
 - the package, its spec and `sglang.patch` included;
 - the config's engine settings or environment;
 - the topology (GPU type or count);

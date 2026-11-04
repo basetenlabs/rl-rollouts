@@ -6,9 +6,8 @@ delta from your checkpoint's tensor list, loads the anchor, applies the delta an
 in flight through your spec, loads the result natively and compares every GPU tensor and the logits. CI runs
 the same kit and BIS acceptance on every recipe we ship.
 
-It is a self-check: a deployment never asks for its result. A passing report, without `--dev`, on the image
-your deployment runs is what Baseten [supports](add-your-own-model.md#support), and the report is what you send
-us to ask for support. The report names the image `revision`, `package_sha256`, `spec_digest` and GPUs it ran
+It is a self-check: a deployment never asks for its result. The report is what you send us to ask for
+support. It names the image `revision`, `package_sha256`, `spec_digest` and GPUs it ran
 on. Run it again after any change to the package (its `sglang.patch` included), the image (`gpuTRTImage`), the
 config's engine settings or environment, the topology or your `config.json`. These steps are for single-node
 recipes; CI runs a multi-node recipe's kit as a multi-node training job, so ask us for a run on yours.
