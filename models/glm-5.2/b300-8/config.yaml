@@ -1,7 +1,7 @@
 # RL Rollouts: Baseten's qualified configuration for this model and topology.
 # Edit only BUCKET (marked EDIT below). Name the model when you push:
 #   baseten model push --dir <this folder> --override-name <your model name> --wait
-# Create the two secrets named under secrets first (README.md, "Deploy"). Any other
+# Create the two secrets named under secrets first (docs/deploy.md). Any other
 # change runs a configuration Baseten has not qualified.
 model_name: rl-rollouts
 description: BIS serving with trainer-published checkpoint updates.
@@ -11,7 +11,7 @@ resources:
   memory: 1760Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:a6169dd6a9ca2f22699088cbeac3b6d5e5b8e64f2a21a7b2bd78982c6e051d3d
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:be5ec455fb531a1f1242f4378efe5955f870111a23c5405ba03619cf6f570c48
     model_name: glm-5.2-fp8
     checkpoint_name: zai-org/GLM-5.2
     tokenizer_limit_length: 131072
@@ -79,7 +79,6 @@ bis_llm:
       gpus_per_node: 8
       environment:
         INFERENCE_RL_TOPP_CAPTURE: '1'
-        INFERENCE_RL_MTP_SYNC: '1'
         RAM_WEIGHT_RESERVE_GB: '384'
         DELTA_RAM_GB: '460'
         WEIGHT_UPDATE_DECODE_BATCH_BYTES: '1073741824'
