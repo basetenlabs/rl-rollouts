@@ -1,7 +1,7 @@
 # RL Rollouts: Baseten's qualified configuration for this model and topology.
 # Edit only BUCKET (marked EDIT below). Name the model when you push:
 #   baseten model push --dir <this folder> --override-name <your model name> --wait
-# Create the two secrets named under secrets first (README.md, "Deploy"). Any other
+# Create the two secrets named under secrets first (docs/deploy.md). Any other
 # change runs a configuration Baseten has not qualified.
 model_name: rl-rollouts
 description: BIS serving with trainer-published checkpoint updates.
@@ -11,7 +11,7 @@ resources:
   memory: 1700Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:a6169dd6a9ca2f22699088cbeac3b6d5e5b8e64f2a21a7b2bd78982c6e051d3d
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:6f5381d2c17ec6deacbe64d1c50960cefe26f60c7c34d10b1fc05f2e5db8960b
     model_name: deepseek-v4.1-flash-mxfp4
     checkpoint_name: deepseek-ai/DeepSeek-V4.1-Flash-1017
     tokenizer_limit_length: 262144
@@ -58,7 +58,7 @@ bis_llm:
       ep_size: 8
       enable_return_routed_experts: true
       enable_hierarchical_cache: true
-      hicache_ratio: 1.0
+      hicache_ratio: 1
       hicache_write_policy: write_back
       mem_fraction_static: 0.8
       chunked_prefill_size: 16384
@@ -81,6 +81,8 @@ bis_llm:
         BDN_PROXY_CREDENTIAL_FILE: /secrets/rl_bdn_partition
       engine_environment:
         SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION: '0'
+        SGLANG_OPT_FUSE_WQA_WKV: '1'
+        SGLANG_ENABLE_DSV41_ENGRAM_HOST_TABLE: '0'
 secrets:
   rl_checkpoint_reader: null
   rl_bdn_partition: null
