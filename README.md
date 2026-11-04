@@ -1,8 +1,9 @@
 # RL Rollouts
 
 Your rollout deployment serves a model whose weights follow your trainer. You publish checkpoints
-to an Amazon S3 or Google Cloud Storage (GCS) bucket you own and request each one; every replica
-applies the new weights in place and keeps serving. You never redeploy to change weights.
+to an Amazon S3 or Google Cloud Storage (GCS) bucket you own, or with `rl.cannery` to Cannery volume
+versions, and request each one; every replica applies the new weights in place and keeps serving.
+You never redeploy to change weights.
 
 ## How it works
 
@@ -24,7 +25,7 @@ Each recipe is a `config.yaml` under `models/<model>/<topology>/`:
 | [`models/kimi-k3/gb300-8`](models/kimi-k3/gb300-8/config.yaml) | two GB300:4 nodes (MXFP4) |
 | [`models/qwen3.5-9b/h100-1`](models/qwen3.5-9b/h100-1/config.yaml) | H100:1 |
 
-1. [Deploy](docs/deploy.md) a recipe: secrets, bucket, push, call.
+1. [Deploy](docs/deploy.md) a recipe: storage, push, call.
 2. [Publish checkpoints and request them](docs/checkpoints.md): bucket layout, hot-load API, delta format.
 3. Read the [RL request and response fields](docs/rl-api.md): policy versions, token IDs, expert routes.
 4. Wire it into your trainer: [Miles and Slime](docs/training-loops.md).

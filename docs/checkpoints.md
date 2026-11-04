@@ -1,6 +1,9 @@
 # Checkpoints and hot loads
 
-## Bucket layout
+## Snapshot layout
+
+Object-storage deployments use this tree. With `rl.cannery: true`, each Cannery volume version is
+the snapshot directory itself: its root holds these files and is tagged with that identity.
 
 ```text
 s3://your-bucket/your-run/
@@ -44,15 +47,18 @@ POST https://model-MODEL_ID.api.baseten.co/deployment/DEPLOYMENT_ID/sync/hot_loa
 {"identity": "step000002", "incremental_snapshot_metadata": {"compression_format": "arc_v2", "checksum_format": "alder32"}}
 ```
 
-Omit `incremental_snapshot_metadata` for an anchor; other keys are ignored. `200 {}`: replicas will load it
+Omit `incremental_snapshot_metadata` for an anchor. With `rl.cannery: true`, every request also sends `source`
+(`{"type":"cannery","ref":"bdn:<namespace>/<volume>:<tag>","token":"<pull token>","api":"https://bdn.baseten.co"}`)
+and its `identity` is one Snapshot name; without `rl.cannery`, `source` is invalid. Other keys are ignored. `200 {}`: replicas will load it
 (the newest request wins; resending the current target changes nothing). `400`: the request or snapshot is
 invalid, and nothing changed. `503`: not accepted (no replica could check it, or it could not be saved); retry.
 Replicas that missed a request, restart or are added load the newest one saved in their cluster. `GET` the same URL returns `replicas` and `excluded_replicas`.
 Each replica has `replica_id` (its name in Baseten's logs), `readiness` (false while it swaps), `current_snapshot_identity` and a `loading_state` with
 `target_snapshot_identity` and a `stage`: `loading`, `done`, or `error` with a `reason` (errors list first).
 Poll until every replica is `done` (check `stage`, not just `readiness`); there is no deadline. After an `error`, resend once the cause is fixed, or
-request an anchor. Replicas with no target yet are in `excluded_replicas`, each with a `reason`.
-`STARTUP_SNAPSHOT` holds a request body, e.g. `{"identity": "step000001"}` (`publish_checkpoint.py startup` writes it). Replicas no request has reached load it, rechecking every 10 s until it names a loadable snapshot.
+request an anchor. With `rl.cannery: true`, a failed pull (an expired token included) is an `error` whose `reason` starts with
+`needs hot-load:`: send the request again with a fresh token. Replicas with no target yet are in `excluded_replicas`, each with a `reason`.
+Without `rl.cannery`, `STARTUP_SNAPSHOT` holds a request body, e.g. `{"identity": "step000001"}` (`publish_checkpoint.py startup` writes it). Replicas no request has reached load it, rechecking every 10 s until it names a loadable snapshot.
 
 ## Delta format (`arc_v2`)
 
@@ -115,7 +121,7 @@ delta locally and checks every checksum.
 - **Diff against exactly what you published:** the parent's on-disk bytes after quantization, not your trainer's master weights.
 - **Keep the checkpoint format fixed.** Anchors must be complete and use the deployed layout: 128×128
   block-FP8 for GLM; published MXFP4 for Kimi K3; FP8 32×32/MXFP4
-  with BF16 `wo_a` and FP32 dense block scales for DeepSeek V4.1 Flash; published BF16 (FP32 `A_log`, gated norms) for Qwen 3.5. Changing `config.json`, tokenizer or chat template needs a redeploy.
+  with BF16 `wo_a` and FP32 dense block scales for DeepSeek V4.1 Flash; published BF16 (FP32 `A_log`, gated norms) for Qwen 3.5; published BF16, those tensors widened on GPU, for Qwen 3.8. Changing `config.json`, tokenizer or chat template needs a redeploy.
 - **The vision encoder is frozen.** A delta that changes vision-encoder tensors is rejected before
   the pause; the old policy keeps serving. A new anchor reloads its own encoder (GLM 5.3 Flash: FP32).
 - **Publish a new anchor occasionally,** for example when a chain gets long or a large share of

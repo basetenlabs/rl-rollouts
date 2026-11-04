@@ -1,10 +1,11 @@
 # Deploy a recipe
 
-We enable BIS and your recipe's accelerator (B200, B300, GB300 or H100) on your Baseten workspace.
+We enable BIS and your recipe's accelerator (B200, B300, GB300, H200 or H100) on your Baseten workspace.
 Custom models and SGLang patches must also be [enabled for your organization](../README.md#bring-your-own-model). Then:
 
 1. Install the [Baseten CLI](https://github.com/basetenlabs/baseten-cli#installation) (v1.2.0+) and run `baseten auth login --with-api-key --profile <name>` with your API key on stdin.
-2. Create these workspace secrets (Settings → Secrets) with exactly these names:
+2. Create these workspace secrets (Settings → Secrets) with exactly these names; with `rl.cannery: true`
+   (step 3), skip the first two:
    - `rl_checkpoint_reader`: `{"aws_access_key_id": "...", "aws_secret_access_key": "...",
      "aws_region": "<bucket region>"}` (`aws_region` is required), static keys (a session token would expire) that can list and
      read your prefix. S3: an IAM user's keys. GCS: an HMAC key (access ID and secret) from
@@ -14,9 +15,11 @@ Custom models and SGLang patches must also be [enabled for your organization](..
    - `hf_access_token`, only if the push asks for it: a Hugging Face read token.
 3. Pick a recipe folder from the [README](../README.md#use-a-model-we-ship). In its `config.yaml`, set `BUCKET`
    (the line marked `EDIT`) to `s3://bucket/prefix` or `gs://bucket/prefix`, ideally near the deployment region.
-   Edit nothing else: config changes depart from the documented recipe.
+   A recipe with an `rl.cannery` line (also marked `EDIT`) can read Snapshots from Cannery volumes instead: set it
+   to `true`; `BUCKET` and the secrets then go unused. Edit nothing else: config changes depart from the documented recipe.
 4. Publish an anchor and name it in [`STARTUP_SNAPSHOT`](checkpoints.md#hot-load-api), then
    `baseten model push --dir <recipe folder> --override-name <your model name> --profile <name> --wait`.
+   With `rl.cannery: true`, push first, then request a full Snapshot with its `source`, unless Baseten mounts one at start.
 5. Call `https://model-MODEL_ID.api.baseten.co/deployment/DEPLOYMENT_ID/sync/v1/chat/completions`
    (`Authorization: Api-Key <key>`, model = the config's `served_model_name`); see [RL fields](rl-api.md).
 
