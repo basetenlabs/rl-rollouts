@@ -24,6 +24,7 @@ Each recipe is a `config.yaml` under `models/<model>/<topology>/`:
 | [`models/glm-5.2/b300-8`](models/glm-5.2/b300-8/config.yaml) | B300:8 |
 | [`models/kimi-k3/gb300-8`](models/kimi-k3/gb300-8/config.yaml) | two GB300:4 nodes (MXFP4) |
 | [`models/qwen3.5-9b/h100-1`](models/qwen3.5-9b/h100-1/config.yaml) | H100:1 |
+| [`models/qwen3.8-27b/h200-1`](models/qwen3.8-27b/h200-1/config.yaml) | H200:1 |
 
 1. [Deploy](docs/deploy.md) a recipe: storage, push, call.
 2. [Publish checkpoints and request them](docs/checkpoints.md): bucket layout, hot-load API, delta format.
