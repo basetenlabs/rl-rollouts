@@ -3,6 +3,7 @@
 Generated from Baseten's qualified deployment configs; edits to this repository are overwritten.
 Running deployments never change: push a new deployment to pick up an entry.
 
+- 2026-11-04 `models/qwen3.5-9b/h100-1` updated
 - 2026-11-04 `models/deepseek-v4.1-flash-mxfp4/b200-8` updated
 - 2026-11-04 `models/glm-5.2/b300-8` updated
 - 2026-11-04 `models/deepseek-v4.1-flash-mxfp4/b200-8` updated
