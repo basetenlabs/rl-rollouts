@@ -46,8 +46,8 @@ semantics; compare outputs with your reference runtime yourself.
      --work /b10/workspace/kit --output /b10/workspace/kit-out
    ```
 
-   It prints `PASS` or `FAIL` and exits 0 only on a pass. A failure names each tensor that differs (rank,
-   runner, path, category and comparison) in `kit-out/report.json`; the run logs are beside it.
+   It prints `PASS` or `FAIL` and exits 0 only on a pass. Failures are in
+   `kit-out/report.json`; the run logs are beside it.
 4. To ask for support, send us the whole `kit-out` folder (`report.json` and the logs).
 5. Stop the workstation.
 
@@ -57,10 +57,10 @@ the run: the kit checks every file against the image's manifest. `--dev` runs ch
 
 ## Reading report.json
 
-`verdict` is `PASS` only when `failures` is empty. `categories` counts the GPU storages compared, by what a
+`verdict` is `PASS` only when `failures` is empty. When comparisons run, `categories` counts the GPU storages compared, by what a
 weight update does to them. The runs are: `A` the random anchor, `B` a native load of the anchor plus the
 delta, `AB` the anchor updated by the delta through your spec, and `ABA` a full swap back to `A`. Each
-failure names `rank`, `runner` (`target` or `draft`), `storage`, `paths`, `category` and `problem`:
+comparison failure names `rank`, `runner` (`target` or `draft`), `storage`, `paths`, `category` and `problem`:
 
 | Failure | Likely cause | Fix |
 |---|---|---|
@@ -80,8 +80,10 @@ failure names `rank`, `runner` (`target` or `draft`), `storage`, `paths`, `categ
 | `where: engine contract`: `routed experts missing`, `hold … IDs` or `outside [0, N)` | An MoE class does not report routes as SGLang's stock MoE layers do. | Route through SGLang's MoE layers so routes are captured. |
 | `where: engine contract`: `no generation was in flight`, `NO_COMMITTED_CACHE` or `not every rank logged in-flight cache retention MATCH` | Traffic did not span the pause, or the KV cache was not kept across it. | Rerun once; if it repeats, check your patch's scheduler and cache changes. |
 | `cleanup incomplete` | A run left its checkpoint copy or held GPUs. | Rerun on a fresh workstation. |
+| `where: spec name check` | The spec cannot serve one or more checkpoint tensors, so the kit stopped before generating an anchor. | Fix the named tensor patterns; rerun the [CPU check](weight-spec.md#check-it-on-cpu). |
+| `where: candidate startup verdict` or `where: reference startup verdict` | The engine loaded, but the startup verdict rejected the GPU tensors before comparisons. | Fix the named spec or class mismatch; send us the report if it is not clear. |
 
-A run that stops before any report with `A run without --dev needs the image's … ; use --dev` loaded code from
-outside the image or found files changed under its roots (the manifest check); a `where: image` failure means
-the same was found after the runs. Use a fresh workstation and install nothing into the image, or iterate with
+A `where: kit` failure that mentions `A run without --dev needs the image's … ; use --dev` loaded code from
+outside the image or found files changed under its roots before the runs; a `where: image` failure means the
+same was found after the runs. Use a fresh workstation and install nothing into the image, or iterate with
 `--dev`, which runs the same comparisons but never counts.
