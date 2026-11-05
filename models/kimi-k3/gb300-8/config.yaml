@@ -14,7 +14,7 @@ resources:
 bis_llm:
   version: 0.0.1-20261001221953-8f302211
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:0e7f0c182610bcf608a52c280fc39ae15adc39a79a23d0f3f5cbdd4cedf0d44e
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:4d3608f517d8297cd8d7ee3a08294db70fe7f38d7ccf77f884a3a23310b8c32e
     model_name: kimi-k3
     checkpoint_name: moonshotai/Kimi-K3
     b10_routing_config:
@@ -123,6 +123,7 @@ bis_llm:
         SGLANG_ENABLE_TP_MEMORY_INBALANCE_CHECK: '0'
         SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION: '0'
         SGLANG_MOE_COPY_WEIGHT_VIEWS_BEFORE_H2D: '1'
+        SGLANG_DISABLE_KDA_PREFILL_GRAPH_EXTEND: '1'
 secrets:
   rl_checkpoint_reader: null
   rl_bdn_partition: null
