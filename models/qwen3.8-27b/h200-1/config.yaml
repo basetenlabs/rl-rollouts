@@ -10,7 +10,7 @@ description: BIS serving with trainer-published checkpoint updates.
 resources:
   accelerator: H200:1
   cpu: '14'
-  memory: 190Gi
+  memory: 180Gi
 bis_llm:
   config:
     gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:fecf4190e2dffb4ea76d6e9c34eef1229a3d4c37b7a35a2ea2fa41371ce75719
