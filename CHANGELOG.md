@@ -3,6 +3,7 @@
 Generated from Baseten's qualified deployment configs; edits to this repository are overwritten.
 Running deployments never change: push a new deployment to pick up an entry.
 
+- 2026-11-05 `models/kimi-k3/gb300-8` updated
 - 2026-11-05 `models/deepseek-v4.1-flash-mxfp4/b200-8` updated
 - 2026-11-05 `models/glm-5.3-flash/b200-8` updated
 - 2026-11-05 `models/kimi-k3/gb300-8` updated
