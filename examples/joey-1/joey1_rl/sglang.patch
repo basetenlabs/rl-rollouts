@@ -1,8 +1,8 @@
 diff --git a/python/sglang/srt/layers/attention/triton_backend.py b/python/sglang/srt/layers/attention/triton_backend.py
-index 547b6f87bd..b77a8d0480 100644
+index ef19c8cece..5d9181cd26 100644
 --- a/python/sglang/srt/layers/attention/triton_backend.py
 +++ b/python/sglang/srt/layers/attention/triton_backend.py
-@@ -21,6 +21,7 @@ from sglang.srt.distributed.device_communicators.pynccl_allocator import (
+@@ -22,6 +22,7 @@ from sglang.srt.distributed.device_communicators.pynccl_allocator import (
      use_symmetric_memory,
  )
  from sglang.srt.environ import envs
@@ -10,24 +10,24 @@ index 547b6f87bd..b77a8d0480 100644
  from sglang.srt.layers.attention.base_attn_backend import AttentionBackend
  from sglang.srt.layers.attention.verify_mask import VerifyMask, maybe_create_verify_mask
  from sglang.srt.layers.dcp import (
-@@ -140,6 +141,8 @@ class ForwardMetadata:
-     lean_Lp: Optional[torch.Tensor] = None
-     lean_Op: Optional[torch.Tensor] = None
+@@ -145,6 +146,8 @@ class ForwardMetadata:
      lean_locks: Optional[torch.Tensor] = None
+     # One int32, set by get_num_kv_splits when the decode seq lens are uneven
+     uneven_batch: Optional[torch.Tensor] = None
 +    # joey-1: custom_mask holds the attention blocks; the extend runs noncausal.
 +    attention_blocks: bool = False
  
  
  class TritonAttnBackend(AttentionBackend):
-@@ -841,6 +844,7 @@ class TritonAttnBackend(AttentionBackend):
-         # Lean decode buffers are only allocated on the decode path below; default
+@@ -886,6 +889,7 @@ class TritonAttnBackend(AttentionBackend):
          # to None so the shared ForwardMetadata constructor works for extend/verify.
          lean_Mp = lean_Lp = lean_Op = lean_locks = None
+         uneven_batch = None
 +        attention_blocks = False
  
          if forward_batch.forward_mode.is_decode_or_idle():
              if spec_info is None or spec_info.kv_indptr is None:
-@@ -1058,6 +1062,15 @@ class TritonAttnBackend(AttentionBackend):
+@@ -1117,6 +1121,15 @@ class TritonAttnBackend(AttentionBackend):
              qo_indptr = qo_indptr[: bs + 1]
              custom_mask = None
              mask_indptr = None
@@ -43,15 +43,15 @@ index 547b6f87bd..b77a8d0480 100644
              attn_logits = None
              attn_lse = None
              # Defensive GPU-max fallback when extend_seq_lens_cpu is absent.
-@@ -1095,6 +1108,7 @@ class TritonAttnBackend(AttentionBackend):
-             lean_Lp=lean_Lp,
+@@ -1155,6 +1168,7 @@ class TritonAttnBackend(AttentionBackend):
              lean_Op=lean_Op,
              lean_locks=lean_locks,
+             uneven_batch=uneven_batch,
 +            attention_blocks=attention_blocks,
          )
  
      def init_cuda_graph_state(
-@@ -1675,7 +1689,7 @@ class TritonAttnBackend(AttentionBackend):
+@@ -1744,7 +1758,7 @@ class TritonAttnBackend(AttentionBackend):
  
          logits_soft_cap = logit_capping_mod(layer.logit_capping_method, layer.logit_cap)
  
@@ -61,10 +61,10 @@ index 547b6f87bd..b77a8d0480 100644
              layer.is_cross_attention
              or layer.attn_type == AttentionType.ENCODER_ONLY
 diff --git a/python/sglang/srt/managers/schedule_batch.py b/python/sglang/srt/managers/schedule_batch.py
-index 5a384f71c7..32dddb4f93 100755
+index ef421fbb97..c2ecd6de5e 100644
 --- a/python/sglang/srt/managers/schedule_batch.py
 +++ b/python/sglang/srt/managers/schedule_batch.py
-@@ -95,6 +95,7 @@ from sglang.srt.disaggregation.decode_schedule_batch_mixin import (
+@@ -98,6 +98,7 @@ from sglang.srt.disaggregation.decode_schedule_batch_mixin import (
  from sglang.srt.disaggregation.utils import FAKE_BOOTSTRAP_HOST, DisaggregationMode
  from sglang.srt.dllm.mixin.req import ReqDllmMixin
  from sglang.srt.environ import envs
@@ -72,7 +72,7 @@ index 5a384f71c7..32dddb4f93 100755
  from sglang.srt.managers.embed_types import PositionalEmbeds
  from sglang.srt.managers.kv_hints import KvHintsEnvelope
  from sglang.srt.managers.scheduler_components.new_token_ratio_tracker import (
-@@ -1090,6 +1091,11 @@ class Req(ReqDllmMixin):
+@@ -1120,6 +1121,11 @@ class Req(ReqDllmMixin):
          self.decision_layout = decision_layout
          # Baseten: the request's model_inputs, data for a model package's code.
          self.model_inputs = model_inputs
@@ -84,7 +84,7 @@ index 5a384f71c7..32dddb4f93 100755
  
          # For req-level memory management
          self.kv = ReqKvInfo()
-@@ -1133,6 +1139,12 @@ class Req(ReqDllmMixin):
+@@ -1165,6 +1171,12 @@ class Req(ReqDllmMixin):
          )
  
          # Extra key for caller-defined request classification.
@@ -97,20 +97,20 @@ index 5a384f71c7..32dddb4f93 100755
          if lora_id is not None:
              extra_key = (
                  extra_key or ""
-@@ -1435,6 +1447,9 @@ class Req(ReqDllmMixin):
+@@ -1468,6 +1480,9 @@ class Req(ReqDllmMixin):
          # Snapshot of the scheduler prefill-token counter taken at waiting_queue entry; used by HRRN aging.
          self.arrival_processed_tokens: int = 0
  
 +        if self.model_inputs_error is not None:
 +            self.set_finish_with_abort(self.model_inputs_error)
 +
-     def advance_cache_request_handle(self) -> None:
-         self.cache_request_handle = dataclasses.replace(
-             self.cache_request_handle,
-@@ -1711,6 +1726,9 @@ class Req(ReqDllmMixin):
-             max_prefix_len = min(max_prefix_len, self.dllm_block_offset)
-         if self.return_logprob and self.logprob_start_len >= 0:
-             max_prefix_len = min(max_prefix_len, self.logprob_start_len)
+     def get_mm_token_counts(self) -> Tuple[int, int, int]:
+         """Return per-modality prompt counts, scanning media at most once."""
+         if not self.mm_token_counts_ready and self.multimodal_inputs is not None:
+@@ -1790,6 +1805,9 @@ class Req(ReqDllmMixin):
+             committed_len = len(self.origin_input_ids) + len(self.output_ids)
+             max_prefix_len = min(max_prefix_len, committed_len)
+             max_prefix_len = max_prefix_len // block_size * block_size
 +        if self.prefix_cache_cap is not None:
 +            # joey-1: the extend kernel shows every query the whole cached prefix.
 +            max_prefix_len = min(max_prefix_len, self.prefix_cache_cap)

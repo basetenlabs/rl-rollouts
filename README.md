@@ -43,7 +43,7 @@ Every recipe and example sets the current image as `gpuTRTImage`; a `sglang.patc
 the SGLang release on the same line. A new image with a new SGLang pin comes with a new release.
 
 <!-- image:start -->
-**Current image:** `baseten/dynamo-cache-aware-routing@sha256:0e7f0c182610bcf608a52c280fc39ae15adc39a79a23d0f3f5cbdd4cedf0d44e`, SGLang release [`sglang-222dc664fc24`](https://github.com/basetenlabs/rl-rollouts/releases/tag/sglang-222dc664fc24).
+**Current image:** `baseten/dynamo-cache-aware-routing@sha256:4d3608f517d8297cd8d7ee3a08294db70fe7f38d7ccf77f884a3a23310b8c32e`, SGLang release [`sglang-2bd137c915ea`](https://github.com/basetenlabs/rl-rollouts/releases/tag/sglang-2bd137c915ea).
 <!-- image:end -->
 
 Custom models and SGLang patches are available only for organizations where they are enabled.
