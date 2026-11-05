@@ -4,9 +4,9 @@
 
 When your model needs SGLang changes (a model file, an attention backend, a Triton kernel, request fields,
 scheduler code), put them in your package as `sglang.patch`: a plain `git diff` against the SGLang fork
-that the image pins. The README's [current-image line](../README.md#bring-your-own-model) names the image and its SGLang release; download that
+that the image pins. The README's [Bring your own model](../README.md#bring-your-own-model) section names the image and current SGLang release; download that
 release from [rl-rollouts releases](https://github.com/basetenlabs/rl-rollouts/releases) and check it with `sha256sum -c sglang-<pin>.tar.gz.sha256`.
-It contains the fork tree minus the protected files, plus `SGLANG_EXPORT.md`, which states the pin, lists
+It contains the fork tree plus `SGLANG_EXPORT.md`, which states the pin, lists
 what is protected and shows how to make the patch:
 
 ```sh
@@ -38,5 +38,5 @@ package's own code runs in the engine process. The startup verdict, the update c
 conformance kit are what prove an update correct.
 
 The patch is part of your package, so the kit report's package hash covers it, and the kit
-runs with it applied. A patch is tied to one image: a new image with a new SGLang pin has a new release; rebase the
-patch onto it and run the kit again. Compiled kernels are out of scope; Triton kernels in Python files can be patched.
+runs with it applied. A patch is tied to one image: a new image with a new SGLang pin gets a release
+after review; rebase the patch once it is published and run the kit again. Compiled kernels are out of scope; Triton kernels in Python files can be patched.
