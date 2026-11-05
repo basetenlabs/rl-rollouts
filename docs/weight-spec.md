@@ -13,14 +13,41 @@ A spec names, for every checkpoint tensor:
 
 - its group: `group` (deltas update it), `frozen` (on the GPU but never in a delta) or `discarded` (not loaded);
 - the native SGLang parameter name;
-- a layout only when the tensor lands in part of a fused module (`stacked`) or in the routed experts (`expert`).
+- a layout when the tensor lands in part of a fused module (`stacked`), routed experts (`expert`), a registered
+  provider (`provider`) or native row reordering (`native(rows=...)`): `expert(param, part)` names the full
+  destination parameter, such as `mlp.experts.w13_{leaf}`, and the `w1` (gate), `w3` (up) or `w2` (down) projection the source fills.
+
+A layout may also reorder rows within each block of its destination: `rows=rope_interleave(head_dim)`
+on a `stacked`, `provider` or native layout (`native(rows=...)`) describes a loader that permutes each
+head's q/k rows from rotate-half to interleaved order; `head_dim` is an even integer or a config key.
 
 Config keys name the part sizes of a fused projection; every other size, shard and block comes from the
 live SGLang module. `config` holds the checks a checkpoint must pass and the per-layer tags that select
-entries; `draft` describes a speculative draft whose weights follow the target's; `requires` lists the
+entries, read from your checkpoint's `config.json` (never SGLang's engine configuration, which it rewrites); `draft` describes a speculative draft whose weights follow the target's; `requires` lists the
 engine settings and environment the layouts need.
 
 The spec's architecture must be the one in your `config.json` `architectures`, and must not be one we ship.
+
+## Your own layer classes
+
+A layer class of your own (in your package's `models/`, or patched in) needs its layout registered once,
+when your package imports, through the weight-update library in the image (`sglang.srt.rl_weights`):
+
+- routed experts: `experts.register_adapter(MyExperts, experts.Adapter(ownership, parts, leaf, resolve))`;
+  `ownership(module)` returns an `experts.ExpertOwnership` (whole experts per rank, the global expert in
+  each local slot), and `resolve` places one owned expert's source given its local slot;
+- any other layer the native rules do not describe (for example a fused projection with its own loader):
+  `providers.register_provider(MyLinear, provide)`, used by `provider("qkv_proj", part)` entries;
+  `provide(module, params, param, shape, parts)` returns `((parameter, layout), ...)`;
+- derived tensors your layer recomputes from its weights: `layers.register(layers.LayerRefresh(...))`.
+
+Your package import must not initialize CUDA: the update helper imports the package in a CPU process.
+
+Layouts are the library's `layout.SliceLayout`, `RowMapLayout` or `SwizzledScaleLayout`, over the
+module's own parameters; anything else is refused. A subclass may register its own entry (the nearest
+class wins); the same class twice, or a base of a registered class, is refused, and registration closes
+when the engine binds its first model. A wrong layout fails the startup verdict, which compares every
+mapped GPU byte with your checkpoint.
 
 ## Check it on CPU
 

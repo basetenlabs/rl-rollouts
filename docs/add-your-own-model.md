@@ -86,8 +86,10 @@ are good enough to train on. Nothing in a deployment re-runs the kit or checks y
 
 ## What is supported
 
-- Dense layers and routed experts (`expert` layouts).
-- Fused or stacked modules: one checkpoint tensor in part of a native parameter (`stacked`).
+- Dense layers and routed experts (`expert` layouts, naming the destination parameter: `expert("mlp.experts.w13_{leaf}", "w1")`).
+- Fused or stacked modules: one checkpoint tensor in part of a native parameter (`stacked`), or of your own
+  layer's (`provider`), with loader row permutations (`rows`).
+- Your own expert and layer classes, registered from your package ([your own layer classes](weight-spec.md#your-own-layer-classes)).
 - A speculative draft synced with the target (`draft`).
 - Frozen towers (on the GPU, never in a delta) and discarded tensors (never loaded).
 - Checkpoint dtypes equal to the served ones, or BF16 where SGLang serves FP32 ([dtype rule](weight-spec.md#checkpoint-dtypes)).

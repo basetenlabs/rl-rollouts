@@ -45,9 +45,12 @@ def layer(*, draft):
         tensor(f"mlp.shared_experts.up_proj.{LEAF}", when=sparse,
                layout=stacked("mlp.shared_experts.gate_up_proj", 1)),
         tensor(f"mlp.shared_experts.down_proj.{LEAF}", when=sparse),
-        tensor(f"mlp.experts.{{expert}}.gate_proj.{LEAF}", when=sparse, layout=expert("mlp.experts", "w1")),
-        tensor(f"mlp.experts.{{expert}}.up_proj.{LEAF}", when=sparse, layout=expert("mlp.experts", "w3")),
-        tensor(f"mlp.experts.{{expert}}.down_proj.{LEAF}", when=sparse, layout=expert("mlp.experts", "w2")),
+        tensor(f"mlp.experts.{{expert}}.gate_proj.{LEAF}", when=sparse,
+               layout=expert("mlp.experts.w13_{leaf}", "w1")),
+        tensor(f"mlp.experts.{{expert}}.up_proj.{LEAF}", when=sparse,
+               layout=expert("mlp.experts.w13_{leaf}", "w3")),
+        tensor(f"mlp.experts.{{expert}}.down_proj.{LEAF}", when=sparse,
+               layout=expert("mlp.experts.w2_{leaf}", "w2")),
     )
 
 
