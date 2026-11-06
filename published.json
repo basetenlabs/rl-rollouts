@@ -3,7 +3,7 @@
     "models/deepseek-v4.1-flash-mxfp4/b200-8": "18f11131548743487624782cefabc6c099d3e477",
     "models/glm-5.2/b300-8": "84b7936d1bde3a5fa87e8315e9947647f59fc336",
     "models/glm-5.3-flash/b200-8": "84b7936d1bde3a5fa87e8315e9947647f59fc336",
-    "models/kimi-k3/gb300-8": "30c11381c35fbe80ec0c7fb1abda5adbcb1d07df",
+    "models/kimi-k3/gb300-8": "84b7936d1bde3a5fa87e8315e9947647f59fc336",
     "models/qwen3.5-9b/h100-1": "84b7936d1bde3a5fa87e8315e9947647f59fc336",
     "models/qwen3.8-27b/h200-1": "84b7936d1bde3a5fa87e8315e9947647f59fc336"
   },
