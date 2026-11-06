@@ -48,7 +48,7 @@ then, the release below is the previous pin's, and a patch written against it do
 **Current image:** `baseten/dynamo-cache-aware-routing@sha256:5bfadaada792d05a1c5857ddf106d0d6dcb6e0e29d97277f5264d4098fd6d902`.
 <!-- image:end -->
 <!-- sglang-release:start -->
-**Current SGLang release:** [`sglang-222dc664fc24`](https://github.com/basetenlabs/rl-rollouts/releases/tag/sglang-222dc664fc24).
+**Current SGLang release:** [`sglang-8cc97cae140a`](https://github.com/basetenlabs/rl-rollouts/releases/tag/sglang-8cc97cae140a).
 <!-- sglang-release:end -->
 
 Custom models and SGLang patches are available only for organizations where they are enabled.
