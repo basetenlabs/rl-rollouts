@@ -39,4 +39,6 @@ conformance kit are what prove an update correct.
 
 The patch is part of your package, so the kit report's package hash covers it, and the kit
 runs with it applied. A patch is tied to one image: a new image with a new SGLang pin gets a release
-after review; rebase the patch once it is published and run the kit again. Compiled kernels are out of scope; Triton kernels in Python files can be patched.
+after review; rebase the patch once it is published and run the kit again. The patch holds Python only (Triton
+kernels included); ship compiled kernels prebuilt in your package ([rules](extension-api.md#compiled-kernels)) and
+import them from patched code.

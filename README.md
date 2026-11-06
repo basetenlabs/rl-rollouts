@@ -27,7 +27,7 @@ Each recipe is a `config.yaml` under `models/<model>/<topology>/`:
 | [`models/qwen3.8-27b/h200-1`](models/qwen3.8-27b/h200-1/config.yaml) | H200:1 |
 
 1. [Deploy](docs/deploy.md) a recipe: storage, push, call.
-2. [Publish checkpoints and request them](docs/checkpoints.md): bucket layout, hot-load API, delta format.
+2. [Publish checkpoints and request them](docs/checkpoints.md): bucket layout, hot-load API; the [delta format](docs/delta-format.md).
 3. Read the [RL request and response fields](docs/rl-api.md): policy versions, token IDs, expert routes.
 4. Wire it into your trainer: [Miles and Slime](docs/training-loops.md).
 
@@ -37,7 +37,8 @@ Each recipe is a `config.yaml` under `models/<model>/<topology>/`:
 
 A model we do not ship can use the same in-place updates when you supply its weight spec, and its
 SGLang model class if SGLang lacks one. Start at [Add your own model](docs/add-your-own-model.md);
-[`examples/`](examples/) holds two worked packages.
+[`examples/`](examples/) holds two worked packages, and the [extension API](docs/extension-api.md) lists what
+a package may rely on.
 
 Every recipe and example sets the current image as `gpuTRTImage`; a `sglang.patch` is written against
 the current SGLang release. A new image with a new SGLang pin gets its release after review; until

@@ -27,17 +27,16 @@ json.dump(config, open("config.json", "w"), indent=2)
 
 | You have | You don't have |
 |---|---|
-| This repository: the guide, recipes and both examples | The weight-sync runtime source (the image ships it as bytecode) |
-| The serving image, with the `weight_spec` library and the [conformance kit](conformance-kit.md) | The protected SGLang files and definitions ([patch rules](sglang-patches.md#rules)) |
+| This repository: the guide, recipes and both examples | The source of the weight-sync runtime and the kit (the image ships both as bytecode; the `weight_spec` library stays source) |
+| The serving image, with the `weight_spec` library, the [CPU check](extension-api.md#cpu-check) and the [conformance kit](conformance-kit.md) | The protected SGLang files and definitions ([patch rules](sglang-patches.md#rules)) |
 | The image's SGLang export, as a [release](https://github.com/basetenlabs/rl-rollouts/releases) named in the README's [Bring your own model](../README.md#bring-your-own-model) section | Changes to the image: the kit checks every file against its manifest |
-| Baseten workstations and BIS on your workspace | Compiled kernels (Triton kernels in Python files are fine) |
-| | Multi-node recipes for your own model |
-| | Our architecture names |
+| Baseten workstations and BIS on your workspace | Multi-node recipes for your own model |
+| The [extension API](extension-api.md): what your package may rely on, prebuilt kernels included | Our architecture names |
 
 ## The dev loop
 
 ```text
-export ──► class + patch ──► spec ──► CPU spec check ──► kit --dev ──► upload ──► deploy ──► your semantics checks
+export ──► class + patch ──► spec ──► CPU check ──► kit --dev ──► upload ──► deploy ──► your semantics checks
                 ▲                           │               │                                         │
                 └───────── fix ─────────────┴───────────────┘           for support: kit run ──► kit-out to us
 ```
@@ -46,10 +45,11 @@ export ──► class + patch ──► spec ──► CPU spec check ──►
    [Bring your own model](../README.md#bring-your-own-model) section names the image (`gpuTRTImage`, which the examples already set) and current SGLang
    release; download that [release](https://github.com/basetenlabs/rl-rollouts/releases) ([details](sglang-patches.md)).
 2. **Write the class and the patch**: the class in your package's `models/`, engine changes as
-   [`sglang.patch`](sglang-patches.md). Skip this step for a stock SGLang class.
+   [`sglang.patch`](sglang-patches.md), using only the [extension API](extension-api.md). Skip this step
+   for a stock SGLang class.
 3. **Write the spec** in `weight_update.py` ([vocabulary](weight-spec.md#vocabulary)), and cast your
    checkpoint to the [served dtypes](weight-spec.md#checkpoint-dtypes).
-4. **Check the spec on CPU** ([snippet](weight-spec.md#check-it-on-cpu)) until it prints `OK`.
+4. **Run the [CPU check](extension-api.md#cpu-check)** on the archive (built as in step 6) until it prints `OK`.
 5. **Iterate on a workstation** with the [kit](conformance-kit.md) and `--dev`: the same run on any code.
    Before each rerun with a changed archive, remove `/packages/external/<package>`. Triage failures with
    [Reading report.json](conformance-kit.md#reading-reportjson).
@@ -94,7 +94,7 @@ are good enough to train on. Nothing in a deployment re-runs the kit or checks y
 - Frozen towers (on the GPU, never in a delta) and discarded tensors (never loaded).
 - Checkpoint dtypes equal to the served ones, or BF16 where SGLang serves FP32 ([dtype rule](weight-spec.md#checkpoint-dtypes)).
 - Single-node recipes.
-- Deltas in [`arc_v2`](checkpoints.md#delta-format-arc_v2) and full anchors, as for the recipes we ship.
+- Deltas in [`arc_v2`](delta-format.md) and full anchors, as for the recipes we ship.
 
 ## When to run the kit again
 
@@ -108,7 +108,11 @@ A report covers one setup. Run the kit again after any change to:
 
 ## Common refusals
 
-The deployment or the kit stops before any weights load and logs one of these:
+The deployment or the kit stops before any weights load and logs one of these. Since you cannot read the
+runtime's source, the message is the whole diagnosis: a deployment logs it in the replica's logs, and a kit
+run records it in `report.json` as a failure row whose `where` is `kit` (before the runs) or the run that
+refused (`candidate` or `reference`), with `problem` holding the error's type and message and `log` that run's
+log, which has the full stack ([Reading report.json](conformance-kit.md#reading-reportjson)).
 
 | Message | Fix |
 |---|---|
@@ -117,7 +121,7 @@ The deployment or the kit stops before any weights load and logs one of these:
 | `External package '…' has no weight_update module` / `weight_update exports no SPECS` | Add `weight_update.py` exporting `SPECS = (SPEC,)`. |
 | `External package '…' has model classes without a weight spec` | Every `EntryClass` in `models/` needs a spec for its architecture. |
 | `External package '…' claims our architectures` | Give your checkpoint and spec your own architecture name. |
-| `Package … holds compiled bytecode` / `Package archive holds compiled bytecode` | Rebuild the archive with `--exclude=__pycache__`; run the CPU check with `-B`. |
+| `Package … holds compiled bytecode` / `Package archive holds compiled bytecode` | Rebuild the archive with `--exclude=__pycache__`. |
 | `/packages/external/… holds a different package than the archive` | Kit: remove `/packages/external/<package>` before rerunning with a changed archive. |
 | `sglang.patch: hunk N of … does not apply exactly at line M` | Make the patch against the export of this image's pin. |
 | `sglang.patch: … is protected` / `changes protected …` | Leave the weight-update surface alone; see the [rules](sglang-patches.md#rules). |

@@ -2,7 +2,8 @@
 
 RL fields ride on `POST .../sync/v1/chat/completions` and `POST .../sync/v1/completions` (same base URL
 and `Authorization: Api-Key <key>` as in [Deploy a recipe](deploy.md)). Ask for outputs in
-`nvext.extra_fields`; set inputs in `baseten.rl`:
+`nvext.extra_fields`; set inputs in `baseten.rl`. On chat completions `logprobs` is a boolean;
+on `/v1/completions` it is an integer (`1` returns `token_logprobs`), and `true` returns HTTP 400:
 
 ```json
 {"model": "glm-5.3-flash-fp8", "messages": [{"role": "user", "content": "Say 42"}],

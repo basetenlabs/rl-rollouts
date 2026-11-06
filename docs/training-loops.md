@@ -48,8 +48,9 @@ This setup is written against [Miles](https://github.com/radixark/miles) as of c
   - `--update-weight-local-checkpoint-dir /nvme/miles-ckpt`
   - `--custom-update-weight-post-write-path publish_hook.publish`
   - not `--colocate`: disk-delta rejects it.
-- Qwen 3.5 on Miles' Megatron backend: export `linear_attn.norm.weight` as `param.float()` in
-  `megatron_to_hf/qwen3_5.py`. The anchor stores it in FP32, so a BF16 export fails the first delta.
+- Qwen 3.5 on Miles' Megatron backend: export `linear_attn.norm.weight` and `linear_attn.A_log` as
+  `param.float()` in `megatron_to_hf/qwen3_5.py`. The anchor stores both in FP32, so a BF16 export fails
+  the first delta.
 
 ## Rollouts
 

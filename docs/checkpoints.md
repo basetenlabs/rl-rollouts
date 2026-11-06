@@ -60,44 +60,10 @@ request an anchor. With `rl.cannery: true`, a failed pull (an expired token incl
 `needs hot-load:`: send the request again with a fresh token. Replicas with no target yet are in `excluded_replicas`, each with a `reason`.
 Without `rl.cannery`, `STARTUP_SNAPSHOT` holds a request body, e.g. `{"identity": "step000001"}` (`publish_checkpoint.py startup` writes it). Replicas no request has reached load it, rechecking every 10 s until it names a loadable snapshot.
 
-## Delta format (`arc_v2`)
+## Delta format
 
-A delta shard is a normal `.safetensors` file whose entries are not weights. Each entry is a 1-D
-`uint8` tensor named after the weight it updates, holding
-
-```text
-zstd_compress( parent_tensor_bytes XOR new_tensor_bytes )
-```
-
-The file's safetensors metadata maps each tensor name to the decimal Adler-32 checksum of the
-**new** tensor's bytes. Shape and dtype come from the parent. Tensors you omit keep their parent
-values. It needs: [safetensors](https://huggingface.co/docs/safetensors/index) for the container,
-[python-zstandard](https://python-zstandard.readthedocs.io/) for compression and Python's
-[`zlib.adler32`](https://docs.python.org/3/library/zlib.html#zlib.adler32) for checksums.
-For background on the same idea in an open-source RL framework, see slime's
-[delta weight sync](https://github.com/THUDM/slime/blob/main/docs/en/advanced/delta-weight-sync.md);
-its files are not interchangeable with this format. The per-shard encoder core:
-
-```python
-import zlib, zstandard, numpy as np
-from safetensors.numpy import save_file
-
-def encode(parent: dict[str, np.ndarray], new: dict[str, np.ndarray], path: str):
-    frames, checksums = {}, {}
-    for name, new_t in new.items():
-        old_b = parent[name].view(np.uint8).ravel()   # exact bytes of the published parent
-        new_b = new_t.view(np.uint8).ravel()
-        if np.array_equal(old_b, new_b):
-            continue                                  # unchanged: omit
-        diff = np.bitwise_xor(old_b, new_b).tobytes()
-        frames[name] = np.frombuffer(
-            zstandard.ZstdCompressor(level=3).compress(diff), dtype=np.uint8)
-        checksums[name] = str(zlib.adler32(new_b.tobytes()) & 0xFFFFFFFF)
-    save_file(frames, path, metadata=checksums)
-```
-
-The service decompresses each entry, reads changed GPU positions, applies the XOR mask, and
-verifies the new checksum. Bad delta bytes or masked old-value drift reject before pause.
+Delta shards hold `zstd(parent XOR new)` per changed tensor, with the new bytes' Adler-32 in the shard
+metadata. The [delta format](delta-format.md) page specifies hops, shard names, entries and checksums.
 
 ## Publishing with `publish_checkpoint.py`
 

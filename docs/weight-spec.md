@@ -51,23 +51,10 @@ mapped GPU byte with your checkpoint.
 
 ## Check it on CPU
 
-Run this on the workstation you launch for the [conformance kit](conformance-kit.md) (it has the serving
-image, so `weight_spec` imports), from the directory holding your package and the anchor's `config.json`
-and `model.safetensors.index.json`:
-
-```sh
-PYTHONPATH=/packages:$PWD python3 -B - <<'EOF'
-import json
-from deepseek_v32_rl.weight_update import SPEC
-from weight_spec import check
-config = json.load(open("config.json"))
-names = sorted(json.load(open("model.safetensors.index.json"))["weight_map"])
-report = check(SPEC, config, names)  # raises ValueError naming a config key the spec refuses
-print("\n".join(report.errors()) or "OK")  # otherwise each error names its tensor or entry
-EOF
-```
-
-Replace `deepseek_v32_rl` with your package. `-B`: the package is hashed as source, so it must hold no bytecode.
+The [CPU check](extension-api.md#cpu-check) matches every checkpoint name against your spec
+(`weight_spec.check`) and prints every error: a name no entry claims, an entry that claims no name, a
+discarded name that a loaded entry spells, and a name whose native name an earlier entry claims first.
+A checkpoint config that breaks a `config` requirement or tag rule fails with the key it names.
 
 ## Checkpoint dtypes
 
