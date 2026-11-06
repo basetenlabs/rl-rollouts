@@ -14,18 +14,20 @@ on `/v1/completions` it is an integer (`1` returns `token_logprobs`), and `true`
 
 | Request field | Meaning |
 |---|---|
-| `nvext.extra_fields` | Any of `prompt_token_ids`, `completion_token_ids`, `prompt_logprobs`, `routed_experts`, `engine_data`. Others (e.g. `worker_id`, `timing`) return HTTP 400. |
+| `nvext.extra_fields` | Any of `prompt_token_ids`, `completion_token_ids`, `prompt_logprobs`, `output_top_logprobs`, `routed_experts`, `engine_data`. Others (e.g. `worker_id`, `timing`) return HTTP 400. |
 | `prompt_logprobs` | Top-level count that computes prompt scores; also list `prompt_logprobs` in `extra_fields` to return them. Text only. |
 | `baseten.rl.routed_experts_start_len` | First prompt position whose routes you want (default 0). |
 | `baseten.rl.logprob_start_len` | First prompt position scored by `prompt_logprobs` (default 0). |
 | `baseten.rl.kv_cache_tag` | 1–256 character rollout ID; see [multi-turn rollouts](#multi-turn-rollouts). |
 | `baseten.rl.images` | Image URLs for a token-ID prompt on `/v1/completions`; see [images](#images). |
 | `baseten.rl.model_inputs` | JSON object passed to an external model package's SGLang class. |
+| `baseten.rl.top_logprobs` | K for `output_top_logprobs`, 1–256 (the OpenAI fields stop at 5 on `/v1/completions`). Without it, K is `logprobs` (chat: `top_logprobs`). |
 | `baseten.rl.token_ids_logprob` | Token IDs whose output logprobs you need even outside the top returned logprobs. |
 | `baseten.rl.return_sampling_mask` | `true` returns the [retained top-p support](#sampling-support). |
 
 RL fields need `n` = 1 (one choice); unknown `baseten.rl` keys return HTTP 400. Use non-streaming
-requests: streams carry token IDs as per-chunk deltas and reject sampling masks.
+requests: streams carry token IDs as per-chunk deltas and reject sampling masks and
+`output_top_logprobs`.
 
 | Response field | Contents |
 |---|---|
@@ -33,6 +35,7 @@ requests: streams carry token IDs as per-chunk deltas and reject sampling masks.
 | `nvext.completion_token_ids` | Every sampled token, including stop, tool-call and reasoning tokens hidden from the text. |
 | `nvext.prompt_logprobs` | One entry per prompt token: `null` for the first, else a map from token ID to `logprob` and `rank`. |
 | `nvext.token_ids_logprobs` | Output-token logprobs for `baseten.rl.token_ids_logprob`. |
+| `nvext.output_top_logprobs` | The engine's top K candidates of every output token, by token ID in rank order: `{"token_ids", "logprobs"}`, base64 `.npy` arrays `[output_tokens, K]` of `int32` and `float32`. See [top-K by token ID](#top-k-by-token-id). |
 | `nvext.engine_data` | `policy_version`, `weight_identity`, `replica_id`, usage counts; `topp_token_ids`/`topp_lens` when requested. |
 | `nvext.routed_experts` | Base64 `.npy` array `[rows, layers, top_k]` of logical expert IDs, `uint8` (≤ 256 experts) or `uint16`. |
 | `nvext.routed_experts_start` | Absolute position of the first `routed_experts` row. |
@@ -50,6 +53,16 @@ The engine leaves out rows for a prompt prefix it took from its KV cache
 `routed_experts_start_len`. A text request with `prompt_logprobs` recomputes its whole prompt and
 takes no cached prefix. Without a tag, the cached prefix may come from any request, and its rows are
 in no response you can identify. Tag your rollouts.
+
+## Top-K by token ID
+
+OpenAI `top_logprobs` are keyed by token text, so two tokens with the same text collide. For losses
+that need each output token's top-K candidates, list `output_top_logprobs` in `extra_fields` and set
+K with `baseten.rl.top_logprobs`. Decode each array as in [expert routes](#expert-routes); row `i`
+is output token `i`. The response then drops the text-keyed copy: `choices[].logprobs` keeps only
+each sampled token's logprob. HTTP 400 for a streaming request, for K below 1 (no
+`baseten.rl.top_logprobs` and no `logprobs` K), and for `baseten.rl.top_logprobs` without the field.
+At K = 32 the field adds about 0.36 KB per output token.
 
 ## Multi-turn rollouts
 
