@@ -28,10 +28,16 @@ any weights load if any of these is true:
 
 - a hunk does not apply exactly where its header says;
 - a file is not a `.py` file under `python/sglang/`, or the patch deletes, renames or changes the mode of a file;
-- the patch touches a protected file (the weight-update library and update transaction), or changes, adds
-  or removes a protected definition in a shared file (pause, update and preparation handlers and their
-  request types, the runners an update writes, model-class binding, and what our runtime wraps); the export lists both;
+- the patch touches a protected file (the runtime's callbacks, sampling capture and the weight-update
+  library's tensor inventory), or changes, adds or removes a protected definition in a shared file
+  (pause, update and preparation handlers and their request types, the runners an update writes, the
+  startup load, model-class binding, and what our runtime wraps); the export lists both;
 - a patched file uses `__file__` (patched modules run from a private copy).
+
+The rest of the weight-update library (`sglang.srt.rl_weights`: layouts, coverage, padding, refreshes)
+is not protected: patch it when your model needs something the [extension API](extension-api.md) does not
+offer, such as rows of a fused parameter that no checkpoint tensor writes. The startup verdict and the
+kit still have to pass.
 
 These checks catch accidental edits to the weight-update paths. They are not a security boundary: your
 package's own code runs in the engine process. The startup verdict, the update checksum and the

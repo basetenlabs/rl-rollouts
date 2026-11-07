@@ -124,6 +124,6 @@ log, which has the full stack ([Reading report.json](conformance-kit.md#reading-
 | `Package … holds compiled bytecode` / `Package archive holds compiled bytecode` | Rebuild the archive with `--exclude=__pycache__`. |
 | `/packages/external/… holds a different package than the archive` | Kit: remove `/packages/external/<package>` before rerunning with a changed archive. |
 | `sglang.patch: hunk N of … does not apply exactly at line M` | Make the patch against the export of this image's pin. |
-| `sglang.patch: … is protected` / `changes protected …` | Leave the weight-update surface alone; see the [rules](sglang-patches.md#rules). |
+| `sglang.patch: … is protected` / `changes protected …` | Leave the update transaction and pause handlers alone; see the [rules](sglang-patches.md#rules). |
 | `sglang.patch: … is not a Python file under python/sglang/` / `is renamed, deleted or inconsistently new` | Patch only `.py` files under `python/sglang/`; make new files plain additions. |
 | `sglang.patch: … uses __file__` | Patched modules run from a private copy; locate files another way. |
