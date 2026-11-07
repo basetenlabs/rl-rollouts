@@ -31,7 +31,7 @@ The spec's architecture must be the one in your `config.json` `architectures`, a
 ## Your own layer classes
 
 A layer class of your own (in your package's `models/`, or patched in) needs its layout registered once,
-when your package imports, through the weight-update library in the image (`sglang.srt.rl_weights`):
+through the weight-update library in the image (`sglang.srt.rl_weights`):
 
 - routed experts: `experts.register_adapter(MyExperts, experts.Adapter(ownership, parts, leaf, resolve))`;
   `ownership(module)` returns an `experts.ExpertOwnership` (whole experts per rank, the global expert in
@@ -41,7 +41,13 @@ when your package imports, through the weight-update library in the image (`sgla
   `provide(module, params, param, shape, parts)` returns `((parameter, layout), ...)`;
 - derived tensors your layer recomputes from its weights: `layers.register(layers.LayerRefresh(...))`.
 
-Your package import must not initialize CUDA: the update helper imports the package in a CPU process.
+Make these calls, and every import of an SGLang layer class, in a module of your package's `models/`
+directory: SGLang imports each of those modules, in engine processes only, before it binds the model.
+Never make them in your package's `__init__.py` or `weight_update.py`, which every process SGLang spawns
+imports, and so does the CPU process that plans each update. Importing SGLang's layers imports
+`sgl_kernel`, which queries the GPU: from those two modules, the update helper refuses with
+`initialized CUDA while importing`, and a spawned process can die with
+`AssertionError: Must be called before importing torch`.
 
 Layouts are the library's `layout.SliceLayout`, `RowMapLayout` or `SwizzledScaleLayout`, over the
 module's own parameters; anything else is refused. A subclass may register its own entry (the nearest

@@ -12,6 +12,7 @@ what is protected and shows how to make the patch:
 ```sh
 cd sglang && git init -q && git add -A && git commit -qm "fork <pin>"
 # edit python/sglang/...
+git add -N python/sglang  # include new files
 git diff --no-renames -- python/sglang > ../<package>/sglang.patch
 ```
 

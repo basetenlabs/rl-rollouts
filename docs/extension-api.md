@@ -26,25 +26,28 @@ After an image bump, rebase your `sglang.patch`, rebuild your kernels, and run t
   no device queries, allocations or kernel launches. Allocate GPU state when your class is constructed or
   when it runs.
 - **The update helper must stay off the GPU too.** Each replica plans every weight update in a separate
-  CPU process, which imports your package and `sglang.srt.rl_weights.layout`; importing must never initialize
-  CUDA, since a second CUDA context would compete with serving. A package that does is refused at startup,
-  before any weights load: the error names this rule and includes the stack where CUDA was first initialized.
-  Move that call into construction or the forward pass, then rerun the [CPU check](#cpu-check).
-- The package holds source and extension modules only, never bytecode: build the archive with
-  `--exclude=__pycache__` ([dev loop](add-your-own-model.md#the-dev-loop) step 6). `package_sha256`
-  hashes every file, `.so` files included, so the kit report names exactly what ran.
+  CPU process, which imports your package's `__init__.py` and `weight_update.py` (not `models/`, where
+  [registrations and SGLang layer imports belong](weight-spec.md#your-own-layer-classes)) and
+  `sglang.srt.rl_weights.layout`; importing must never initialize CUDA, since a second CUDA context would
+  compete with serving. A package that does is refused at startup, before any weights load: the error names
+  this rule and includes the stack where CUDA was first initialized. Move that call into construction or the forward pass, then rerun the [CPU check](#cpu-check).
+- The package holds regular files only (source, extension modules and any data or executables they
+  use), never bytecode, links or special files: build the archive with `--exclude=__pycache__`
+  ([dev loop](add-your-own-model.md#the-dev-loop) step 6). The archive may be at most 64 MiB, and 256 MiB
+  extracted. Executable bits survive. `package_sha256` hashes every file, `.so` files included, so the
+  kit report names exactly what ran.
 - Use only the surfaces above. A spec, refresh or patch that depends on another internal can break on
   any image, and the startup verdict or the kit is where that shows.
 
 ## Layer refreshes
 
 Some layers derive tensors from weights after loading, such as a requantized or transposed copy. Stock
-SGLang layers already declare theirs. When your class adds a layer like that, register its refresh when
-your package is imported, so that an update recomputes the copy in place:
+SGLang layers already declare theirs. When your class adds a layer like that, register its refresh in a
+[`models/` module](weight-spec.md#your-own-layer-classes), so that an update recomputes the copy in place:
 
 ```python
+# my_model_rl/models/my_layer.py (hypothetical), after class MyLayer
 from sglang.srt.rl_weights import layers
-from my_model_rl.models.my_layer import MyLayer  # hypothetical: your layer class
 
 def _refresh(layer):
     layer.weight_t.copy_(layer.weight.t())  # write every output in place; never rebind one
@@ -65,8 +68,13 @@ static declaration claims fails the startup verdict as `unclassified`.
 A package may ship prebuilt extension modules (`.so`), imported like any module of the package. Triton
 kernels in Python files need no build. Build each `.so`:
 
-- against the image's torch and CUDA (on a workstation of the image:
-  `python3 -c "import torch; print(torch.__version__, torch.version.cuda)"`);
+- against the image's torch and CUDA, on a workstation of the image:
+  `python3 -c "from torch.utils import cpp_extension as c; print(c.include_paths(), c.CUDA_HOME)"`
+  prints the torch headers (`/opt/sglang/lib/python3.12/site-packages/torch/include` on current images)
+  and the CUDA toolkit (`/usr/local/cuda`);
+- linking the driver stub, `-L/usr/local/cuda/lib64/stubs -lcuda`, when your code calls the CUDA driver
+  API: a build host has no GPU driver. Keep the stubs directory out of the `.so`'s rpath, so the
+  serving host's driver loads instead;
 - for the GPU architectures your recipes run on: H100 `sm_90`, B200 `sm_100`, B300 and GB300 `sm_103`;
 - for the host CPU of those recipes: `x86_64` for H100, B200 and B300, `aarch64` for GB300. A package
   for both needs one archive per CPU architecture;
