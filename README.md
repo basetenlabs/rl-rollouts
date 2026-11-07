@@ -35,8 +35,8 @@ Each recipe is a `config.yaml` under `models/<model>/<topology>/`:
 
 ## Bring your own model
 
-A model we do not ship can use the same in-place updates when you supply its weight spec, and its
-SGLang model class if SGLang lacks one. Start at [Add your own model](docs/add-your-own-model.md);
+A model we do not ship can use the same in-place updates when you supply its weight spec, and a
+model class when its forward pass differs from SGLang's. Start at [Add your own model](docs/add-your-own-model.md);
 [`examples/`](examples/) holds two worked packages, and the [extension API](docs/extension-api.md) lists what
 a package may rely on.
 

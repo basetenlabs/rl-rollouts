@@ -11,6 +11,7 @@ but you rebase it for every image.
 | Model classes: `models/` modules with an `EntryClass` | your package | [Add your own model](add-your-own-model.md#which-case-are-you) |
 | Layer layouts: `experts.register_adapter` and `providers.register_provider` | your package | [Your own layer classes](weight-spec.md#your-own-layer-classes) |
 | Layer refreshes: `layers.register` and `layers.register_static` | your package | [below](#layer-refreshes) |
+| Refresh and adapter helpers: `layers.copy_in_place`, `parallel.checked_parameter`, `parallel.group`, `parallel.matrix`, `parallel.whole` | your package | [below](#refresh-and-adapter-helpers) |
 | Engine changes: `sglang.patch` | your package | [Patch rules](sglang-patches.md#rules) |
 | Compiled kernels: prebuilt extension modules (`.so`) | your package | [below](#compiled-kernels) |
 | The CPU check | the image | [below](#cpu-check) |
@@ -35,7 +36,8 @@ After an image bump, rebase your `sglang.patch`, rebuild your kernels, and run t
   use), never bytecode, links or special files: build the archive with `--exclude=__pycache__`
   ([dev loop](add-your-own-model.md#the-dev-loop) step 6). The archive may be at most 64 MiB, and 256 MiB
   extracted. Executable bits survive. `package_sha256` hashes every file, `.so` files included, so the
-  kit report names exactly what ran.
+  kit report names exactly what ran. Package modules load from source only, so a `__pycache__` that
+  appears in the installed `/packages/external/<package>` is never read and not hashed.
 - Use only the surfaces above. A spec, refresh or patch that depends on another internal can break on
   any image, and the startup verdict or the kit is where that shows.
 
@@ -62,6 +64,27 @@ that `run` cannot refresh. The engine refuses, before any write, a refresh that 
 with another one on the same layer. At startup, every refresh that a delta can trigger runs again on
 unchanged weights, and startup fails if anything in its layer changes. A GPU tensor that no spec entry writes and no refresh or
 static declaration claims fails the startup verdict as `unclassified`.
+
+## Refresh and adapter helpers
+
+These live in `sglang.srt.rl_weights` beside `register`; use them rather than copies:
+
+- `layers.copy_in_place(target, value, label)` copies a recomputed `value` into the tensor captured graphs
+  read, and raises `ValueError` naming `label` if the shape or dtype changed.
+- `parallel.checked_parameter(params, name, expected)` returns `params[name]`, refusing a missing name, a
+  shape other than `expected` or a dtype updates cannot write.
+- `parallel.group(module)` returns this rank's `(rank, size)` in a native layer's tensor-parallel weight
+  partition, refusing a layer that has none.
+- `parallel.matrix(name, shape)` refuses a `shape` that is not two-dimensional.
+- `parallel.whole(params, name, shape, expected=None)` returns `((parameter, layout),)` for a destination
+  this rank holds whole: `checked_parameter` against `expected` (default `shape`), with a layout covering
+  every element.
+
+Scratch state, which changes while serving, is classified and left out of the startup refresh check and
+the kit's digests through `layers.SCRATCH`, which the image owns and you cannot extend:
+`HummingWorkspace.locks` and `EngramHasher.history`. Any module of those classes or their subclasses, or
+whose `quant_method` is one, gets this. Never declare scratch with `register_static`: static tensors are
+compared.
 
 ## Compiled kernels
 
@@ -96,7 +119,9 @@ python3 /opt/inference-rl/tools/validation/cpu_check.pyc --config <recipe folder
 It hides every GPU, then installs the archive as the kit does. Next it applies `sglang.patch`, imports your
 package, and resolves the engine's `ServerArgs` fields from your config with the engine's own parser,
 checked against your spec's `requires`. It then imports every module the patch changes or adds, and
-SGLang's model registry, which registers your `models` classes. Finally it runs the spec name check
+SGLang's model registry, which registers your `models` classes. It imports your package again in a fresh
+interpreter, as the update helper does, and refuses it if that import pulls in `sgl_kernel`, SGLang's layers
+or models, or the `layers`, `experts` and `providers` registries. Finally it runs the spec name check
 (`weight_spec.check`) on the checkpoint's `config.json` and tensor names.
 It reads no weights. It prints `OK`, or each problem, and exits 1 on any problem:
 
@@ -104,6 +129,7 @@ It reads no weights. It prints `OK`, or each problem, and exits 1 on any problem
 |---|---|
 | `RuntimeError: No CUDA GPUs are available` (or another CUDA error) | Something calls CUDA at import; move it into construction or the forward pass. |
 | `CUDA was initialized at import` | The same, from code that initialized CUDA without failing. |
+| `The weight preparation helper would initialize CUDA while importing: your package's __init__ or weight_update imports …` | Those modules, or a module they import, register layers or import SGLang layers or your model code. With no GPU visible that initializes nothing, but on a GPU it does ([package rules](#package-rules)). Do that only from `models/`. |
 | `sglang.patch: …`, `External package …` | See [Common refusals](add-your-own-model.md#common-refusals). |
 | `No <arch> spec entry for <name>`, `… matches no tensor`, `… discards …`, `… claims its native name … first` | Fix the named entry ([vocabulary](weight-spec.md#vocabulary)). |
 

@@ -26,7 +26,7 @@ live SGLang module. `config` holds the checks a checkpoint must pass and the per
 entries, read from your checkpoint's `config.json` (never SGLang's engine configuration, which it rewrites); `draft` describes a speculative draft whose weights follow the target's; `requires` lists the
 engine settings and environment the layouts need.
 
-The spec's architecture must be the one in your `config.json` `architectures`, and must not be one we ship.
+The spec's architecture must match your `config.json` `architectures`, and must not be a Baseten-owned architecture name.
 
 ## Your own layer classes
 

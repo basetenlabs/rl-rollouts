@@ -47,8 +47,10 @@ semantics; compare outputs with your reference runtime yourself.
      --work /b10/workspace/kit --output /b10/workspace/kit-out
    ```
 
-   It prints `PASS` or `FAIL` and exits 0 only on a pass. `kit-out/report.json` is written whatever fails;
-   the run logs are beside it.
+   It prints `PASS` or `FAIL` and exits 0 only on a pass. `kit-out/report.json` is written whatever fails,
+   last and in one rename, so it appears only once the kit has finished: watch for that file (for example
+   from another `ssh` session) rather than for the process. `--output` must not exist yet (the kit refuses an
+   existing one before doing anything), so an earlier run's report is never mistaken for this one's. The run logs are beside it.
 4. To ask for support, send us the whole `kit-out` folder (`report.json` and the logs).
 5. Stop the workstation.
 
@@ -99,7 +101,7 @@ through your spec, and `ABA` a full swap back to `A`. Each comparison failure na
 | `where: engine contract`: `output logprobs` or `top-p support do not align` | Your patch changed sampling or log-prob output. | Keep sampling output paths unchanged. |
 | `where: engine contract`: `routed experts missing`, `hold … IDs` or `outside [0, N)` | An MoE class does not report routes as SGLang's stock MoE layers do. | Route through SGLang's MoE layers so routes are captured. |
 | `where: engine contract`: `no generation was in flight`, `NO_COMMITTED_CACHE` or `not every rank logged in-flight cache retention MATCH` | Traffic did not span the pause, or the KV cache was not kept across it. | Rerun once; if it repeats, check your patch's scheduler and cache changes. |
-| `cleanup incomplete` | A run left its checkpoint copy or held GPUs. | Rerun on a fresh workstation. |
+| `cleanup incomplete` | A run left its checkpoint copy or held GPUs; `left` names the copy with its largest files and each process still holding a GPU (pid, name, memory). | Remove those files and stop those processes (or use a fresh workstation), then rerun. |
 | `where: spec name check` | The spec cannot serve one or more checkpoint tensors, so the kit stopped before generating an anchor. | Fix the named tensor patterns; rerun the [CPU check](weight-spec.md#check-it-on-cpu). |
 | `where: candidate startup verdict` or `where: reference startup verdict` | The engine loaded, but the startup verdict rejected the GPU tensors before comparisons. | Fix the named spec or class mismatch; send us the report if it is not clear. |
 

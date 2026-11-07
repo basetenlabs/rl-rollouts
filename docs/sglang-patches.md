@@ -17,7 +17,8 @@ git diff --no-renames -- python/sglang > ../<package>/sglang.patch
 ```
 
 A model class goes in your package's `models/` directory, not in the patch: modules there register with
-SGLang by its `EntryClass` convention, each only for an architecture your specs describe.
+SGLang by its `EntryClass` convention, each only for an architecture your specs describe; a class named
+like one SGLang ships replaces it ([keep that name](add-your-own-model.md#which-case-are-you)).
 [`examples/joey-1`](../examples/joey-1/README.md) has both.
 
 ## Rules

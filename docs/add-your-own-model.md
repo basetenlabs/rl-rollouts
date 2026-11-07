@@ -13,8 +13,14 @@ You bring one Python package; Baseten's serving image does the rest.
 | Its forward pass differs from any SGLang class | the class, an [`sglang.patch`](sglang-patches.md) if the engine needs changes, and a weight spec | [joey-1](../examples/joey-1/README.md) |
 
 Either way your `config.json` names an architecture your spec describes, and it may not be one of ours.
-When you bring a class, give your checkpoint its own architecture name in every anchor you publish
-(Transformers loads by `model_type`, so training is unaffected):
+When you bring a class for an architecture SGLang already ships, keep SGLang's name for both: your
+class replaces SGLang's. SGLang switches behaviour on that literal name, such as which layers use
+sliding-window attention, the multimodal processor, environment defaults and the reasoning and tool
+parsers. Under a new name the model still loads and serves, with all of that silently off, and neither
+the CPU check nor the kit notices. For an architecture SGLang does not ship, or one of ours (which a
+package may not claim; joey-1 wraps Qwen 3.5 this way), give your checkpoint its own architecture name
+in every anchor you publish, and carry over in your class or patch whatever name-keyed behaviour it
+needs (Transformers loads by `model_type`, so training is unaffected):
 
 ```python
 import json
@@ -121,7 +127,8 @@ log, which has the full stack ([Reading report.json](conformance-kit.md#reading-
 | `External package '…' has no weight_update module` / `weight_update exports no SPECS` | Add `weight_update.py` exporting `SPECS = (SPEC,)`. |
 | `External package '…' has model classes without a weight spec` | Every `EntryClass` in `models/` needs a spec for its architecture. |
 | `External package '…' claims our architectures` | Give your checkpoint and spec your own architecture name. |
-| `Package … holds compiled bytecode` / `Package archive holds compiled bytecode` | Rebuild the archive with `--exclude=__pycache__`. |
+| `Secret '…' (AWS_SECRET_NAME) is not mounted at /secrets/…` (or `BDN_PROXY_CREDENTIAL_FILE`) | Create that [workspace secret](deploy.md) with exactly that name; `baseten model push` does not check it. |
+| `Package … holds compiled bytecode` / `Package archive holds compiled bytecode` | Delete the named `.pyc` files, and rebuild the archive with `--exclude=__pycache__`. |
 | `/packages/external/… holds a different package than the archive` | Kit: remove `/packages/external/<package>` before rerunning with a changed archive. |
 | `sglang.patch: hunk N of … does not apply exactly at line M` | Make the patch against the export of this image's pin. |
 | `sglang.patch: … is protected` / `changes protected …` | Leave the update transaction and pause handlers alone; see the [rules](sglang-patches.md#rules). |
