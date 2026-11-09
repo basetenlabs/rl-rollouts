@@ -10,7 +10,7 @@ but you rebase it for every image.
 | Weight spec: the `weight_spec` library, and `weight_update.py` exporting `SPECS` | your package | [Weight spec](weight-spec.md) |
 | Model classes: `models/` modules with an `EntryClass` | your package | [Add your own model](add-your-own-model.md#which-case-are-you) |
 | Layer layouts: `experts.register_adapter` and `providers.register_provider` | your package | [Your own layer classes](weight-spec.md#your-own-layer-classes) |
-| Layer refreshes: `layers.register` and `layers.register_static` | your package | [below](#layer-refreshes) |
+| Layer refreshes: `layers.register`, `layers.register_static` and `layers.register_padding` | your package | [below](#layer-refreshes) |
 | Refresh and adapter helpers: `layers.copy_in_place`, `parallel.checked_parameter`, `parallel.group`, `parallel.matrix`, `parallel.whole` | your package | [below](#refresh-and-adapter-helpers) |
 | Engine changes: `sglang.patch` | your package | [Patch rules](sglang-patches.md#rules) |
 | Compiled kernels: prebuilt extension modules (`.so`) | your package | [below](#compiled-kernels) |
@@ -57,6 +57,8 @@ def _refresh(layer):
 layers.register(layers.LayerRefresh("my_layer_transpose", MyLayer, inputs=("weight",),
                                     outputs=("weight_t",), run=_refresh))
 layers.register_static(MyLayer, ("rope_table",))  # tensors that no weight determines
+# Zero rows of qkv_proj.weight between its q and k members, in elements:
+layers.register_padding(MyLayer, lambda layer: (layer.qkv_proj.weight, layer.q_end, layer.k_start))
 ```
 
 Paths are relative to the layer. `check(layer)`, an optional argument, raises `ValueError` for an instance
@@ -64,6 +66,13 @@ that `run` cannot refresh. The engine refuses, before any write, a refresh that 
 with another one on the same layer. At startup, every refresh that a delta can trigger runs again on
 unchanged weights, and startup fails if anything in its layer changes. A GPU tensor that no spec entry writes and no refresh or
 static declaration claims fails the startup verdict as `unclassified`.
+
+`register_padding(layer, ranges)` declares zero padding that no checkpoint tensor writes:
+`ranges(module)` returns `(tensor, start, stop)`, the element range of the zeros, or None for an instance
+with none. Declared padding counts as covered wherever it falls: between the members of a fused weight your
+spec writes, or past the weights a merged buffer views. Any other unwritten element still fails the startup
+verdict as `unclassified` (`gap at element …`). One declaration per class; a second is refused. Like every
+registration, all three calls are refused once the engine binds its first model.
 
 ## Refresh and adapter helpers
 

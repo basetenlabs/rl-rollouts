@@ -39,7 +39,8 @@ through the weight-update library in the image (`sglang.srt.rl_weights`):
 - any other layer the native rules do not describe (for example a fused projection with its own loader):
   `providers.register_provider(MyLinear, provide)`, used by `provider("qkv_proj", part)` entries;
   `provide(module, params, param, shape, parts)` returns `((parameter, layout), ...)`;
-- derived tensors your layer recomputes from its weights: `layers.register(layers.LayerRefresh(...))`.
+- derived tensors your layer recomputes from its weights: `layers.register(layers.LayerRefresh(...))`;
+  zero padding in a merged buffer over them: [`layers.register_padding`](extension-api.md#layer-refreshes).
 
 Make these calls, and every import of an SGLang layer class, in a module of your package's `models/`
 directory: SGLang imports each of those modules, in engine processes only, before it binds the model.

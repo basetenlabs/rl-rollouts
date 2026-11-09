@@ -38,7 +38,7 @@ any weights load if any of these is true:
 
 The rest of the weight-update library (`sglang.srt.rl_weights`: layouts, coverage, padding, refreshes)
 is not protected: patch it when your model needs something the [extension API](extension-api.md) does not
-offer, such as rows of a fused parameter that no checkpoint tensor writes. The startup verdict and the
+offer, such as a layout descriptor or coverage category it cannot express. The startup verdict and the
 kit still have to pass.
 
 These checks catch accidental edits to the weight-update paths. They are not a security boundary: your
