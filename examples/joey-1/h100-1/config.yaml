@@ -14,7 +14,7 @@ resources:
   memory: 220Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:3a14c9bb7f59da0573328ec9dd9c0ce36333016336e5dca75c185d688b30fac1
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:497bff89ca735919a20274bdd2b2b02e996745e9f1e30aa47a816294cbdeed6f
     model_name: joey-1
     checkpoint_name: baselabs/joey-1
     tokenizer_limit_length: 32768
