@@ -14,7 +14,7 @@ resources:
 bis_llm:
   version: 0.0.1-20261001221953-8f302211
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:3a14c9bb7f59da0573328ec9dd9c0ce36333016336e5dca75c185d688b30fac1
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:497bff89ca735919a20274bdd2b2b02e996745e9f1e30aa47a816294cbdeed6f
     model_name: kimi-k3
     checkpoint_name: moonshotai/Kimi-K3
     b10_routing_config:
