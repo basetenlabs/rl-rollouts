@@ -28,6 +28,27 @@ engine settings and environment the layouts need.
 
 The spec's architecture must match your `config.json` `architectures`, and must not be a Baseten-owned architecture name.
 
+## Speculative drafts
+
+A served draft is always synced: `draft(architecture, shares=..., groups=...)` with at least one `group`, its
+tensors in the same checkpoint as the target's. Serve it with SGLang's NEXTN/EAGLE or DSPARK and one draft
+runner; `--speculative-draft-model-path` is not a setting, so a DSPARK draft must be bundled in the checkpoint.
+`{nextn}` indexes numbered draft layers and needs `config(nextn=...)`; a draft of unnumbered tensors
+(`group("mtp.", "", tensor("{rest:*}"))`) needs neither. `shares=("embed", "head")` when the draft class
+uses the target's embedding and output (`get_embed_and_head` on both classes), `()` when it holds none;
+`shared_names={"embed": ..., "head": ...}` names the draft class's parameters for them when they are not a
+NextN draft's `model.embed_tokens.weight` and `lm_head.weight`. A draft with routed experts of its own (not the
+target's) names their count's config key with `experts=`, and its entries' `{expert}` indices range over that
+count, beside a dense target too; a dense draft needs nothing.
+A draft tensor your class derives from the shared embedding or output needs a registered
+[refresh](extension-api.md#layer-refreshes) on the draft's layer: every delta and full replacement reruns it
+after the target's writes.
+
+To serve a fixed draft, one your trainer never changes, declare it synced anyway and leave its tensors out of
+your deltas: a delta that carries none of a draft's tensors leaves the draft as it is, and the
+[conformance kit](conformance-kit.md) proves it (`ABAT`). Every full checkpoint (the anchor and any full
+replacement) must still carry them, since startup and full replacement load the draft from it.
+
 ## Your own layer classes
 
 A layer class of your own (in your package's `models/`, or patched in) needs its layout registered once,

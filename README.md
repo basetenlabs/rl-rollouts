@@ -21,6 +21,7 @@ Each recipe is a `config.yaml` under `models/<model>/<topology>/`:
 |---|---|
 | [`models/glm-5.3-flash/b200-8`](models/glm-5.3-flash/b200-8/config.yaml) | B200:8 |
 | [`models/deepseek-v4.1-flash-mxfp4/b200-8`](models/deepseek-v4.1-flash-mxfp4/b200-8/config.yaml) | B200:8 |
+| [`models/deepseek-v4.1-flash-mxfp4-dspark/b200-8`](models/deepseek-v4.1-flash-mxfp4-dspark/b200-8/config.yaml) | B200:8 |
 | [`models/glm-5.2/b300-8`](models/glm-5.2/b300-8/config.yaml) | B300:8 |
 | [`models/kimi-k3/gb300-8`](models/kimi-k3/gb300-8/config.yaml) | two GB300:4 nodes (MXFP4) |
 | [`models/qwen3.5-9b/h100-1`](models/qwen3.5-9b/h100-1/config.yaml) | H100:1 |

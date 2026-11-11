@@ -125,7 +125,7 @@ log, which has the full stack ([Reading report.json](conformance-kit.md#reading-
 | `rl.external_package must name a top-level Python package` | Set `rl.external_package` to the package directory's name. |
 | `External package '…' is a name the image already provides` / `would shadow a standard module` | Rename your package. |
 | `External package '…' has no weight_update module` / `weight_update exports no SPECS` | Add `weight_update.py` exporting `SPECS = (SPEC,)`. |
-| `External package '…' has model classes without a weight spec` | Every `EntryClass` in `models/` needs a spec for its architecture. |
+| `External package '…' has model classes without a weight spec` | Every `EntryClass` in `models/` needs a spec for its architecture, or to be named as that spec's `draft(...)` architecture. |
 | `External package '…' claims our architectures` | Give your checkpoint and spec your own architecture name. |
 | `Secret '…' (AWS_SECRET_NAME) is not mounted at /secrets/…` (or `BDN_PROXY_CREDENTIAL_FILE`) | Create that [workspace secret](deploy.md) with exactly that name; `baseten model push` does not check it. |
 | `Package … holds compiled bytecode` / `Package archive holds compiled bytecode` | Delete the named `.pyc` files, and rebuild the archive with `--exclude=__pycache__`. |

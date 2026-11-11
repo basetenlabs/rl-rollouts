@@ -10,7 +10,7 @@ but you rebase it for every image.
 | Weight spec: the `weight_spec` library, and `weight_update.py` exporting `SPECS` | your package | [Weight spec](weight-spec.md) |
 | Model classes: `models/` modules with an `EntryClass` | your package | [Add your own model](add-your-own-model.md#which-case-are-you) |
 | Layer layouts: `experts.register_adapter` and `providers.register_provider` | your package | [Your own layer classes](weight-spec.md#your-own-layer-classes) |
-| Layer refreshes: `layers.register`, `layers.register_static` and `layers.register_padding` | your package | [below](#layer-refreshes) |
+| Layer refreshes: `layers.register`, `layers.register_static`, `layers.register_scratch` and `layers.register_padding` | your package | [below](#layer-refreshes) |
 | Refresh and adapter helpers: `layers.copy_in_place`, `parallel.checked_parameter`, `parallel.group`, `parallel.matrix`, `parallel.whole` | your package | [below](#refresh-and-adapter-helpers) |
 | Engine changes: `sglang.patch` | your package | [Patch rules](sglang-patches.md#rules) |
 | Compiled kernels: prebuilt extension modules (`.so`) | your package | [below](#compiled-kernels) |
@@ -72,7 +72,7 @@ static declaration claims fails the startup verdict as `unclassified`.
 with none. Declared padding counts as covered wherever it falls: between the members of a fused weight your
 spec writes, or past the weights a merged buffer views. Any other unwritten element still fails the startup
 verdict as `unclassified` (`gap at element …`). One declaration per class; a second is refused. Like every
-registration, all three calls are refused once the engine binds its first model.
+registration, every `layers.register*` call is refused once the engine binds its first model.
 
 ## Refresh and adapter helpers
 
@@ -89,11 +89,12 @@ These live in `sglang.srt.rl_weights` beside `register`; use them rather than co
   this rank holds whole: `checked_parameter` against `expected` (default `shape`), with a layout covering
   every element.
 
-Scratch state, which changes while serving, is classified and left out of the startup refresh check and
-the kit's digests through `layers.SCRATCH`, which the image owns and you cannot extend:
-`HummingWorkspace.locks` and `EngramHasher.history`. Any module of those classes or their subclasses, or
-whose `quant_method` is one, gets this. Never declare scratch with `register_static`: static tensors are
-compared.
+Scratch state, which serving writes (per-request state, kernel workspaces), is classified and left out
+of the startup refresh check and the kit's digests. Declare yours with
+`layers.register_scratch(MyLayer, ("state",))`, once per name and before the first bind, like
+`register_static`; the image declares `HummingWorkspace.locks` and `EngramHasher.history`. Never declare
+scratch with `register_static`: static tensors are compared, so state written by in-flight requests fails
+the kit. Keep scratch in its own allocations: a storage that also holds a static view is compared.
 
 ## Compiled kernels
 
