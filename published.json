@@ -5,7 +5,7 @@
     "models/glm-5.2/b300-8": "1613c8a9067f981d1bec53cb6939547f2d2cce9b",
     "models/glm-5.3-flash/b200-8": "1613c8a9067f981d1bec53cb6939547f2d2cce9b",
     "models/kimi-k3/gb300-8": "1613c8a9067f981d1bec53cb6939547f2d2cce9b",
-    "models/qwen3.5-9b/h100-1": "1613c8a9067f981d1bec53cb6939547f2d2cce9b",
+    "models/qwen3.5-9b/h100-1": "85db25d249d9ccae7a89b90082b22c937534d56a",
     "models/qwen3.8-27b/h200-1": "1613c8a9067f981d1bec53cb6939547f2d2cce9b"
   },
   "retired": {},
