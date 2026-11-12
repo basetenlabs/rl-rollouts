@@ -53,7 +53,7 @@ POST https://model-MODEL_ID.api.baseten.co/deployment/DEPLOYMENT_ID/sync/hot_loa
 
 Omit `incremental_snapshot_metadata` for an anchor. With `rl.cannery: true`, every request also sends `source`
 (`{"type":"cannery","ref":"bdn:<namespace>/<volume>:<tag>","token":"<pull token>","api":"https://bdn.baseten.co"}`)
-and its `identity` is one Snapshot name; without `rl.cannery`, `source` is invalid. Other keys are ignored. `200 {}`: replicas will load it
+and its `identity` is one Snapshot name (without `token`/`api`, the deployment's `CANNERY_AUTH_TOKEN_FILE`/`CANNERY_API`); without `rl.cannery`, `source` is invalid. Other keys are ignored. `200 {}`: replicas will load it
 (the newest request wins; resending the current target changes nothing). `400`: the request or snapshot is
 invalid, and nothing changed. `503`: not accepted (no replica could check it, or it could not be saved); retry.
 Replicas that missed a request, restart or are added load the newest one saved in their cluster. `GET` the same URL returns `replicas` and `excluded_replicas`.
