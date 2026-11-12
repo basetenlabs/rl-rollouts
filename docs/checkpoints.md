@@ -63,6 +63,9 @@ Poll until every replica is `done` (check `stage`, not just `readiness`); there 
 request an anchor. With `rl.cannery: true`, a failed pull (an expired token included) is an `error` whose `reason` starts with
 `needs hot-load:`: send the request again with a fresh token. Replicas with no target yet are in `excluded_replicas`, each with a `reason`.
 Without `rl.cannery`, `STARTUP_SNAPSHOT` holds a request body, e.g. `{"identity": "step000001"}` (`publish_checkpoint.py startup` writes it). Replicas no request has reached load it, rechecking every 10 s until it names a loadable snapshot.
+A replica whose first load fails for any other reason than `needs hot-load:` (the weight spec refuses the
+checkpoint's tensors, a download fails, no disk) logs the reason and exits, so the deployment fails visibly
+instead of staying unready; on restart it loads the newest saved request, else `STARTUP_SNAPSHOT`.
 
 ## Delta format
 
