@@ -23,7 +23,8 @@ semantics; compare outputs with your reference runtime yourself.
   in [Add your own model](add-your-own-model.md#the-dev-loop) step 6 (the exact bytes you upload to `rl.external_package_source`).
 - One full anchor of your checkpoint, readable from the workstation: `s3://`, `gs://` (an HMAC key as the
   AWS credentials, as in the `rl_checkpoint_reader` secret) or a local directory. The kit reads only
-  `config.json`, `model.safetensors.index.json` and each shard's header, no weights.
+  `config.json` and each shard's header, no weights. Like serving, it takes every `*.safetensors` file
+  under the anchor as a shard, including one `model.safetensors.index.json` omits, and warns about such a shard.
 - Training workstations on your workspace for the recipe's accelerator, and local disk for about twice
   your checkpoint's size (the random anchor and each run's copy of it).
 

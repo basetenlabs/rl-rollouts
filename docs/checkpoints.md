@@ -25,6 +25,10 @@ s3://your-bucket/your-run/
 {"identity": "step000001", "snapshot_type": "full", "policy_version": 1}
 ```
 
+Serving loads every `*.safetensors` file directly under the anchor and ignores
+`model.safetensors.index.json`; your weight spec must load or discard every tensor in them, including a
+shard the index omits.
+
 For a delta, name its exact parent and the anchor the chain started from:
 
 ```json
