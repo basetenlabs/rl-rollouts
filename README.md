@@ -46,7 +46,7 @@ the current SGLang release. A new image with a new SGLang pin gets its release a
 then, the release below is the previous pin's, and a patch written against it does not apply to the new image.
 
 <!-- image:start -->
-**Current image:** `baseten/dynamo-cache-aware-routing@sha256:b167f7183600b740decb3f81226e34e933b69d652c5f20218005da4f75c8583d`.
+**Current image:** `baseten/dynamo-cache-aware-routing@sha256:02176ec5199e1a2fa1aaec54dfc12f552be1d487a10aa8992b57da032bc3e1c4`.
 <!-- image:end -->
 <!-- sglang-release:start -->
 **Current SGLang release:** [`sglang-6feb62abd897`](https://github.com/basetenlabs/rl-rollouts/releases/tag/sglang-6feb62abd897).
