@@ -17,7 +17,7 @@ but you rebase it for every image.
 | The CPU check | the image | [below](#cpu-check) |
 | The conformance kit | the image | [Conformance kit](conformance-kit.md) |
 
-Every image is tied to one SGLang release (named in the README's [Bring your own model](../README.md#bring-your-own-model) section).
+Every image has one SGLang pin; use its matching release once the README's [Bring your own model](../README.md#bring-your-own-model) section says it is published.
 After an image bump, rebase your `sglang.patch`, rebuild your kernels, and run the CPU check and the kit again.
 
 ## Package rules

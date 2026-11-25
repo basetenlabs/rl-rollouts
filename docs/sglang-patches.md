@@ -4,8 +4,8 @@
 
 When your model needs SGLang changes (a model file, an attention backend, a Triton kernel, request fields,
 scheduler code), put them in your package as `sglang.patch`: a plain `git diff` against the SGLang fork
-that the image pins. The README's [Bring your own model](../README.md#bring-your-own-model) section names the image and current SGLang release; download that
-release from [rl-rollouts releases](https://github.com/basetenlabs/rl-rollouts/releases) and check it with `sha256sum -c sglang-<pin>.tar.gz.sha256`.
+that the image pins. The README's [Bring your own model](../README.md#bring-your-own-model) section names the image and release status; if it says the
+release is still the previous pin's, wait for the matching release, otherwise download it from [rl-rollouts releases](https://github.com/basetenlabs/rl-rollouts/releases) and check it with `sha256sum -c sglang-<pin>.tar.gz.sha256`.
 It contains the fork tree plus `SGLANG_EXPORT.md`, which states the pin, lists
 what is protected and shows how to make the patch:
 

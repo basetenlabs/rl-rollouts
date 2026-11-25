@@ -1,25 +1,25 @@
 diff --git a/python/sglang/srt/layers/attention/triton_backend.py b/python/sglang/srt/layers/attention/triton_backend.py
-index ef19c8cece..5d9181cd26 100644
+index 7354886cc3..d0b27d7049 100644
 --- a/python/sglang/srt/layers/attention/triton_backend.py
 +++ b/python/sglang/srt/layers/attention/triton_backend.py
-@@ -22,6 +22,7 @@ from sglang.srt.distributed.device_communicators.pynccl_allocator import (
+@@ -26,6 +26,7 @@ from sglang.srt.distributed.device_communicators.pynccl_allocator import (
      use_symmetric_memory,
  )
  from sglang.srt.environ import envs
 +from joey1_rl import blocks as joey_blocks
- from sglang.srt.layers.attention.base_attn_backend import AttentionBackend
- from sglang.srt.layers.attention.verify_mask import VerifyMask, maybe_create_verify_mask
- from sglang.srt.layers.dcp import (
-@@ -145,6 +146,8 @@ class ForwardMetadata:
+ from sglang.srt.layers.attention.base_attn_backend import (
+     AttentionBackend,
+ )
+@@ -163,6 +164,8 @@ class ForwardMetadata:
      lean_locks: Optional[torch.Tensor] = None
      # One int32, set by get_num_kv_splits when the decode seq lens are uneven
      uneven_batch: Optional[torch.Tensor] = None
 +    # joey-1: custom_mask holds the attention blocks; the extend runs noncausal.
 +    attention_blocks: bool = False
  
- 
- class TritonAttnBackend(AttentionBackend):
-@@ -886,6 +889,7 @@ class TritonAttnBackend(AttentionBackend):
+     @property
+     def swa_out_cache_loc(self) -> Optional[torch.Tensor]:
+@@ -1057,6 +1060,7 @@ class TritonAttnBackend(AttentionBackend):
          # to None so the shared ForwardMetadata constructor works for extend/verify.
          lean_Mp = lean_Lp = lean_Op = lean_locks = None
          uneven_batch = None
@@ -27,7 +27,7 @@ index ef19c8cece..5d9181cd26 100644
  
          if forward_batch.forward_mode.is_decode_or_idle():
              if spec_info is None or spec_info.kv_indptr is None:
-@@ -1117,6 +1121,15 @@ class TritonAttnBackend(AttentionBackend):
+@@ -1239,6 +1243,15 @@ class TritonAttnBackend(AttentionBackend):
              qo_indptr = qo_indptr[: bs + 1]
              custom_mask = None
              mask_indptr = None
@@ -43,7 +43,7 @@ index ef19c8cece..5d9181cd26 100644
              attn_logits = None
              attn_lse = None
              # Defensive GPU-max fallback when extend_seq_lens_cpu is absent.
-@@ -1155,6 +1168,7 @@ class TritonAttnBackend(AttentionBackend):
+@@ -1267,6 +1280,7 @@ class TritonAttnBackend(AttentionBackend):
              lean_Op=lean_Op,
              lean_locks=lean_locks,
              uneven_batch=uneven_batch,
@@ -51,7 +51,7 @@ index ef19c8cece..5d9181cd26 100644
          )
  
      def init_cuda_graph_state(
-@@ -1744,7 +1758,7 @@ class TritonAttnBackend(AttentionBackend):
+@@ -1889,7 +1903,7 @@ class TritonAttnBackend(AttentionBackend):
  
          logits_soft_cap = logit_capping_mod(layer.logit_capping_method, layer.logit_cap)
  
@@ -61,18 +61,18 @@ index ef19c8cece..5d9181cd26 100644
              layer.is_cross_attention
              or layer.attn_type == AttentionType.ENCODER_ONLY
 diff --git a/python/sglang/srt/managers/schedule_batch.py b/python/sglang/srt/managers/schedule_batch.py
-index ef421fbb97..c2ecd6de5e 100644
+index 11ec5a39a3..0d39c5f0ab 100644
 --- a/python/sglang/srt/managers/schedule_batch.py
 +++ b/python/sglang/srt/managers/schedule_batch.py
-@@ -98,6 +98,7 @@ from sglang.srt.disaggregation.decode_schedule_batch_mixin import (
- from sglang.srt.disaggregation.utils import FAKE_BOOTSTRAP_HOST, DisaggregationMode
+@@ -91,6 +91,7 @@ from sglang.srt.disaggregation.decode_schedule_batch_mixin import (
+ from sglang.srt.disaggregation.mode import FAKE_BOOTSTRAP_HOST, DisaggregationMode
  from sglang.srt.dllm.mixin.req import ReqDllmMixin
  from sglang.srt.environ import envs
 +from joey1_rl import blocks as joey_blocks
  from sglang.srt.managers.embed_types import PositionalEmbeds
  from sglang.srt.managers.kv_hints import KvHintsEnvelope
- from sglang.srt.managers.scheduler_components.new_token_ratio_tracker import (
-@@ -1120,6 +1121,11 @@ class Req(ReqDllmMixin):
+ from sglang.srt.managers.req_types import (
+@@ -534,6 +535,11 @@ class Req(ReqDllmMixin):
          self.decision_layout = decision_layout
          # Baseten: the request's model_inputs, data for a model package's code.
          self.model_inputs = model_inputs
@@ -84,7 +84,7 @@ index ef421fbb97..c2ecd6de5e 100644
  
          # For req-level memory management
          self.kv = ReqKvInfo()
-@@ -1165,6 +1171,12 @@ class Req(ReqDllmMixin):
+@@ -590,6 +596,12 @@ class Req(ReqDllmMixin):
          )
  
          # Extra key for caller-defined request classification.
@@ -97,7 +97,7 @@ index ef421fbb97..c2ecd6de5e 100644
          if lora_id is not None:
              extra_key = (
                  extra_key or ""
-@@ -1468,6 +1480,9 @@ class Req(ReqDllmMixin):
+@@ -895,6 +907,9 @@ class Req(ReqDllmMixin):
          # Snapshot of the scheduler prefill-token counter taken at waiting_queue entry; used by HRRN aging.
          self.arrival_processed_tokens: int = 0
  
@@ -107,7 +107,7 @@ index ef421fbb97..c2ecd6de5e 100644
      def get_mm_token_counts(self) -> Tuple[int, int, int]:
          """Return per-modality prompt counts, scanning media at most once."""
          if not self.mm_token_counts_ready and self.multimodal_inputs is not None:
-@@ -1790,6 +1805,9 @@ class Req(ReqDllmMixin):
+@@ -1274,6 +1289,9 @@ class Req(ReqDllmMixin):
              committed_len = len(self.origin_input_ids) + len(self.output_ids)
              max_prefix_len = min(max_prefix_len, committed_len)
              max_prefix_len = max_prefix_len // block_size * block_size
@@ -116,4 +116,4 @@ index ef421fbb97..c2ecd6de5e 100644
 +            max_prefix_len = min(max_prefix_len, self.prefix_cache_cap)
          return max(max_prefix_len, 0)
  
-     # Based on https://github.com/vllm-project/vllm/blob/7a64d24aad69e4d2548aa0bf528d9fe63428ab01/vllm/transformers_utils/detokenizer.py#L194-L313
+     def take_detokenize_header_due(self) -> bool:

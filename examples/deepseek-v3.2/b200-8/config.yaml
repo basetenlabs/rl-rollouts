@@ -14,7 +14,7 @@ resources:
   memory: 1700Gi
 bis_llm:
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:ecd6db6055123716f5eda0ba26ac6c8decc8bf207122a63d20751fba1fc1d204
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:ec17b2b8a8cf9e6cc77fb0cb87b2633e1f9b888e6b5876f486a79170e49aaa6c
     model_name: deepseek-v3.2
     checkpoint_name: deepseek-ai/DeepSeek-V3.2
     tokenizer_limit_length: 131072
@@ -48,7 +48,7 @@ bis_llm:
       enable_return_routed_experts: true
       enable_fp32_lm_head: true
       moe_runner_backend: flashinfer_trtllm_routed
-      moe_a2a_backend: flashinfer
+      moe_a2a_backend: flashinfer_nvlink_one_sided
       flashinfer_a2a_dispatch_type: bf16
       fp8_gemm_runner_backend: triton
       disable_shared_experts_fusion: true
