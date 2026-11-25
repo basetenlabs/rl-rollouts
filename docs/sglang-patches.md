@@ -23,9 +23,9 @@ like one SGLang ships replaces it ([keep that name](add-your-own-model.md#which-
 
 ## Rules
 
-Every process of the deployment's worker containers (the SGLang engine's, on every node) applies the patch
-to the image's SGLang before anything imports it, and then serves the patched and new modules; the
-frontend, router and planner containers neither fetch the package nor patch. Everything else stays the image's. The deployment stops before
+Every SGLang engine process in the deployment's worker containers, on every node, applies the patch
+to the image's SGLang before anything imports it, then serves the patched and new modules. Isolated
+helper interpreters and the frontend, router and planner containers neither fetch the package nor patch. Everything else stays the image's. The deployment stops before
 any weights load if any of these is true:
 
 - a hunk does not apply exactly where its header says;
