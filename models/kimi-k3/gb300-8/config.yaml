@@ -12,9 +12,8 @@ resources:
   cpu: '120'
   memory: 890Gi
 bis_llm:
-  version: 0.0.1-20261001221953-8f302211
   config:
-    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:ecd6db6055123716f5eda0ba26ac6c8decc8bf207122a63d20751fba1fc1d204
+    gpuTRTImage: baseten/dynamo-cache-aware-routing@sha256:c6bb7f6c1a8dc2f1dd79b0ef2fd644ef19d69594044b23cde755619997faba8f
     model_name: kimi-k3
     checkpoint_name: moonshotai/Kimi-K3
     b10_routing_config:
@@ -92,7 +91,6 @@ bis_llm:
       mem_fraction_static: 0.91
       cuda_graph_backend_prefill: breakable
       cuda_graph_max_bs_decode: 256
-      num_continuous_decode_steps: 1
       schedule_conservativeness: 1
       enable_hierarchical_cache: true
       hicache_size: 17
@@ -124,6 +122,7 @@ bis_llm:
         SGLANG_ENABLE_HEALTH_ENDPOINT_GENERATION: '0'
         SGLANG_MOE_COPY_WEIGHT_VIEWS_BEFORE_H2D: '1'
         SGLANG_DISABLE_KDA_PREFILL_GRAPH_EXTEND: '1'
+        SGLANG_K3_SHARDED_MOE: '0'
 secrets:
   rl_checkpoint_reader: null
   rl_bdn_partition: null
